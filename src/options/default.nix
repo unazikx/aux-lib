@@ -116,15 +116,23 @@ lib: {
                   ++ result.options
                 else
                   result.options;
+              getPriority =
+                value:
+                if lib.types.is "override" value then
+                  value.priority
+                else
+                  lib.modules.DEFAULT_PRIORITY;
+              higherPriority = value1: value2: (getPriority value1) < (getPriority value2); 
+              mergeProperty = name:
+                if (higherPriority result.${name} option.options.${name}) then result.${name}
+                else if (higherPriority option.options.${name} result.${name}) then option.options.${name}
+                else if result.${name} == option.options.${name} then result.${name} # This is mostly so any defaults/etc. get merged cleanly
+                else builtins.throw "The option `${lib.options.getIdentifier location}` in `${option.__file__}` is already declared in ${serializedFiles}, but their ${name} values could not be merged. Please set one as a higher priority (e.g. using `${name} = lib.modules.overrides.force <value>`) or remove a definition";
             in
             if
-              shared "default"
-              || shared "example"
-              || shared "description"
-              || shared "apply"
-              || (shared "type" && !isTypeMergeable)
+              shared "type" && !isTypeMergeable
             then
-              builtins.throw "The option `${lib.options.getIdentifier location}` in `${option.__file__}` is already declared in ${serializedFiles}"
+              builtins.throw "The option `${lib.options.getIdentifier location}` in `${option.__file__}` is already declared in ${serializedFiles} but its type is not mergeable. Please remove a definition"
             else
               option.options
               // result
@@ -132,6 +140,10 @@ lib: {
                 declarations = result.declarations ++ [ option.__file__ ];
                 options = submodules;
               }
+              // (if shared "default" then { default = mergeProperty "default"; } else {})
+              // (if shared "example" then { example = mergeProperty "example"; } else {})
+              // (if shared "description" then { description = mergeProperty "description"; } else {})
+              // (if shared "apply" then { apply = mergeProperty "apply"; } else {})
               // typeSet;
         in
         builtins.foldl' merge {
