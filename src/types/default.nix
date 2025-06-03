@@ -1090,7 +1090,7 @@ lib: {
             __file__ = definition.__file__;
             options = lib.options.create { type = definition.value; };
           }) definitions;
-          merged = lib.modules.fixup location (lib.options.merge.declarations location modules);
+          merged = lib.modules.apply.fixup location (lib.options.merge.declarations location modules);
         in
         if builtins.length definitions == 1 then first.value else merged.type;
     };
