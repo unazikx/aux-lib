@@ -94,20 +94,38 @@ lib: {
         in
         builtins.sort compare normalized;
 
-      ## Normalize the type of an option. This will set a default type if none
-      ## was provided.
+      ## Normalize an option. This will set a default type if none was
+      ## provided, and remove any property override wrapping
       ##
       ## @type List String -> Option -> Option
       fixup =
         location: option:
+        let
+          normalize =
+            value:
+            if lib.types.is "override" value then
+              value.content
+            else
+              value;
+          getNormalized = name: if option ? ${name} then { ${name} = normalize option.${name}; } else {};
+        in
         if option.type.submodules or null == null then
-          option // { type = option.type or lib.types.unspecified; }
+          option
+          // { type = option.type or lib.types.unspecified; }
+          // getNormalized "default"
+          // getNormalized "example"
+          // getNormalized "description"
+          // getNormalized "apply"
         else
           option
           // {
             type = option.type.withSubModules option.options;
             options = [ ];
-          };
+          }
+          // getNormalized "default"
+          // getNormalized "example"
+          // getNormalized "description"
+          // getNormalized "apply";
 
       ## Invert the structure of `merge`, `when`, and `override` definitions so
       ## that they apply to each individual attribute in their respective sets.
@@ -438,7 +456,7 @@ lib: {
                   }
                 else
                   builtins.throw "The option `${lib.options.getIdentifier location}` in module `${(builtins.head optionDeclarations).__file__}` would be a parent of the following options, but its type `${
-                    (builtins.head optionDeclarations).options.type.description or "<no description>"
+                    (lib.modules.apply.fixup location (builtins.head optionDeclarations)).options.type.description or "<no description>"
                   }` does not support nested options."
               else
                 process location declarations definitions
