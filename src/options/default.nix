@@ -207,13 +207,13 @@ lib: {
     create =
       settings@{
         type ? lib.types.unspecified,
-        apply ? null,
-        default ? { },
-        example ? null,
+        apply ? lib.modules.overrides.default null,
+        default ? lib.modules.overrides.default { },
+        example ? lib.modules.overrides.default null,
         visible ? null,
         internal ? null,
         writable ? null,
-        description ? null,
+        description ? lib.modules.overrides.default null,
       }:
       {
         __type__ = "option";
