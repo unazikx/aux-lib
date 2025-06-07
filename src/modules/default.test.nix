@@ -202,6 +202,167 @@ in
     };
   };
 
+  "merge" = {
+    "merges two options" =
+      let
+        evaluated = lib.modules.run {
+          modules = [
+            {
+              options = {
+                aux = lib.options.create {
+                  description = "Hello world!";
+                  type = lib.types.submodules.of {
+                    modules = [];
+                  };
+                };
+              };
+            }
+            {
+              options = {
+                aux = lib.options.create {
+                  example = "Heya!";
+                  type = lib.types.submodules.of {
+                    modules = [];
+                  };
+                };
+              };
+            }
+          ];
+        };
+      in
+        evaluated.options.aux.description == "Hello world!"
+        && evaluated.options.aux.example == "Heya!";
+    "fails to merge unmergeable options" =
+      let
+        evaluated = lib.modules.run {
+          modules = [
+            {
+              options = {
+                aux = lib.options.create {
+                  description = "Hello world!";
+                  type = lib.types.submodules.of {
+                    modules = [];
+                  };
+                };
+              };
+            }
+            {
+              options = {
+                aux = lib.options.create {
+                  description = "Heya!";
+                  type = lib.types.submodules.of {
+                    modules = [];
+                  };
+                };
+              };
+            }
+          ];
+        };
+      in
+        (builtins.tryEval evaluated.options.aux.description).success == false;
+    "merges three options" =
+      let
+        evaluated = lib.modules.run {
+          modules = [
+            {
+              options = {
+                aux = lib.options.create {
+                  description = "Hello world!";
+                  type = lib.types.submodules.of {
+                    modules = [
+                      {
+                        options.hello = lib.options.create {
+                          type = lib.types.string;
+                        };
+                      }
+                    ];
+                  };
+                };
+              };
+            }
+            {
+              options = {
+                aux = lib.options.create {
+                  example = "Heya!";
+                  type = lib.types.submodules.of {
+                    modules = [];
+                  };
+                };
+              };
+            }
+            {
+              options = {
+                aux = lib.options.create {
+                  default = { hello = "world"; };
+                  type = lib.types.submodules.of {
+                    modules = [];
+                  };
+                };
+              };
+            }
+          ];
+        };
+      in
+        evaluated.options.aux.description == "Hello world!"
+        && evaluated.options.aux.example == "Heya!"
+        && evaluated.options.aux.default == { hello = "world"; };
+    "overrides option properties" =
+      let
+        evaluated = lib.modules.run {
+          modules = [
+            {
+              options = {
+                aux = lib.options.create {
+                  description = lib.modules.overrides.force "Hello world!";
+                  type = lib.types.submodules.of {
+                    modules = [];
+                  };
+                };
+              };
+            }
+            {
+              options = {
+                aux = lib.options.create {
+                  description = "Heya!";
+                  type = lib.types.submodules.of {
+                    modules = [];
+                  };
+                };
+              };
+            }
+          ];
+        };
+      in evaluated.options.aux.description == "Hello world!";
+    "permits duplicate option properties" =
+      let
+        evaluated = lib.modules.run {
+          modules = [
+            {
+              options = {
+                aux = lib.options.create {
+                  description = "Hello world!";
+                  type = lib.types.submodules.of {
+                    modules = [];
+                  };
+                };
+              };
+            }
+            {
+              options = {
+                aux = lib.options.create {
+                  description = "Hello world!";
+                  type = lib.types.submodules.of {
+                    modules = [];
+                  };
+                };
+              };
+            }
+          ];
+        };
+      in
+        evaluated.options.aux.description == "Hello world!";
+  };
+
   "normalize" = {
     "handles an empty set" =
       let
