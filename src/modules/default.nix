@@ -625,7 +625,7 @@ lib: {
 
                 dynamic = {
                   meta = {
-                    inherit extend type;
+                    inherit extend type prefix;
                   };
                 };
               };
