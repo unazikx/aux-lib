@@ -45,6 +45,43 @@ in
     };
   };
 
+  "cartesian" = {
+    "product" = {
+      "computes the cartesian product of two lists" =
+        let
+          expected = [
+            { x = 1; y = "a"; }
+            { x = 1; y = "b"; }
+            { x = 2; y = "a"; }
+            { x = 2; y = "b"; }
+          ];
+          actual = lib.lists.cartesian.product {
+            x = [ 1 2 ];
+            y = [ "a" "b" ];
+          };
+        in
+        actual == expected;
+    };
+
+    "map" = {
+      "maps over the cartesian product of two lists" =
+        let
+          expected = [
+            "1-a"
+            "1-b"
+            "2-a"
+            "2-b"
+          ];
+          actual = lib.lists.cartesian.map ({ x, y }: "${builtins.toString x}-${y}") {
+            x = [ 1 2 ];
+            y = [ "a" "b" ];
+          };
+        in
+        (builtins.trace (builtins.deepSeq actual actual))
+          actual == expected;
+    };
+  };
+
   "mapWithIndex" = {
     "maps a list using index 0" =
       let
@@ -152,7 +189,7 @@ in
         actual = lib.lists.last [ ];
         evaluated = builtins.tryEval actual;
       in
-      !evaluated.success;
+        !evaluated.success;
   };
 
   "slice" = {

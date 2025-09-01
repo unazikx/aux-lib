@@ -23,10 +23,12 @@ lib: {
               parts = lib.strings.split "(0|[1-9][0-9]*)" string;
             in
             builtins.map serialize parts;
-          prepared = builtins.map (value: [
-            (vectorize value)
-            value
-          ]) list;
+          prepared = builtins.map
+            (value: [
+              (vectorize value)
+              value
+            ])
+            list;
           isLess = a: b: (lib.lists.compare lib.numbers.compare (builtins.head a) (builtins.head b)) < 0;
         in
         builtins.map (x: builtins.elemAt x 1) (builtins.sort isLess prepared);
@@ -86,6 +88,23 @@ lib: {
         process (builtins.head list) [ ] (builtins.tail list);
     };
 
+    cartesian = {
+      product = domain:
+        let
+          names = builtins.attrNames domain;
+
+          process =
+            results: name:
+            builtins.concatMap
+              (result: builtins.map (values: result // { ${name} = values; }) domain.${name})
+              results;
+        in
+        builtins.foldl' process [{ }] names;
+
+      map = f: domain:
+        builtins.map f (lib.lists.cartesian.product domain);
+    };
+
     ## Map a list using both the index and value of each item. The
     ## index starts at 0.
     ##
@@ -123,8 +142,8 @@ lib: {
     ## @type List a -> a
     last =
       list:
-      assert lib.errors.trace (list != [ ]) "List cannot be empty";
-      builtins.elemAt list (builtins.length list - 1);
+        assert lib.errors.trace (list != [ ]) "List cannot be empty";
+        builtins.elemAt list (builtins.length list - 1);
 
     ## Slice part of a list to create a new list.
     ##
@@ -163,8 +182,8 @@ lib: {
     ## @type List -> List
     init =
       list:
-      assert lib.errors.trace (builtins.length list != 0) "lib.lists.init: list must not be empty.";
-      lib.lists.take (builtins.length list - 1) list;
+        assert lib.errors.trace (builtins.length list != 0) "lib.lists.init: list must not be empty.";
+        lib.lists.take (builtins.length list - 1) list;
 
     ## Reverse a list.
     ##
@@ -189,10 +208,12 @@ lib: {
         list
       else
         builtins.tail (
-          builtins.concatMap (part: [
-            separator
-            part
-          ]) list
+          builtins.concatMap
+            (part: [
+              separator
+              part
+            ])
+            list
         );
 
     ## Create a list of integers from a starting number to an ending
