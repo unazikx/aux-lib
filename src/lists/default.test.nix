@@ -50,14 +50,32 @@ in
       "computes the cartesian product of two lists" =
         let
           expected = [
-            { x = 1; y = "a"; }
-            { x = 1; y = "b"; }
-            { x = 2; y = "a"; }
-            { x = 2; y = "b"; }
+            {
+              x = 1;
+              y = "a";
+            }
+            {
+              x = 1;
+              y = "b";
+            }
+            {
+              x = 2;
+              y = "a";
+            }
+            {
+              x = 2;
+              y = "b";
+            }
           ];
           actual = lib.lists.cartesian.product {
-            x = [ 1 2 ];
-            y = [ "a" "b" ];
+            x = [
+              1
+              2
+            ];
+            y = [
+              "a"
+              "b"
+            ];
           };
         in
         actual == expected;
@@ -73,12 +91,17 @@ in
             "2-b"
           ];
           actual = lib.lists.cartesian.map ({ x, y }: "${builtins.toString x}-${y}") {
-            x = [ 1 2 ];
-            y = [ "a" "b" ];
+            x = [
+              1
+              2
+            ];
+            y = [
+              "a"
+              "b"
+            ];
           };
         in
-        (builtins.trace (builtins.deepSeq actual actual))
-          actual == expected;
+        (builtins.trace (builtins.deepSeq actual actual)) actual == expected;
     };
   };
 
@@ -189,7 +212,7 @@ in
         actual = lib.lists.last [ ];
         evaluated = builtins.tryEval actual;
       in
-        !evaluated.success;
+      !evaluated.success;
   };
 
   "slice" = {

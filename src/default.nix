@@ -1,27 +1,43 @@
 let
   files = [
-    ./attrs
-    ./bools
-    ./dag
-    ./errors
-    ./fp
-    ./generators
-    ./importers
-    ./licenses
-    ./lists
-    ./math
-    ./modules
-    ./numbers
-    ./options
-    ./packages
-    ./paths
-    ./points
-    ./strings
-    ./types
-    ./versions
+    "attrs"
+    "bools"
+    "dag"
+    "errors"
+    "fp"
+    "generators"
+    "importers"
+    "licenses"
+    "lists"
+    "math"
+    "modules"
+    "numbers"
+    "options"
+    "packages"
+    "paths"
+    "points"
+    "strings"
+    "types"
+    "versions"
   ];
 
-  libs = builtins.map (f: import f) files;
+  # Convert string to path
+  pathify = strpath: ./. + "/${strpath}";
+
+  # We need to reconstruct this:
+  #
+  # ```
+  # lib: { foo = "sdf"; bar = "sdfds"; }
+  # ```
+  #
+  # To this:
+  #
+  # ```
+  # lib: { filename = { foo = "sdf"; bar = "sdfds"; }; }
+  # ```
+  #
+  # For this, we return a new attrset with key "${filename}", and we wrap this thing into a lambda
+  libs = builtins.map (f: lib: { "${f}" = import (pathify f) lib; }) files;
 
   ## Calculate the fixed point of a function. This will evaluate the function `f`
   ## until its result settles (or Nix's recursion limit is reached). This allows
