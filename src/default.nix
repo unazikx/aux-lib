@@ -39,12 +39,24 @@ let
   # For this, we return a new attrset with key "${filename}", and we wrap this thing into a lambda
   libs = builtins.map (f: lib: { "${f}" = import (pathify f) lib; }) files;
 
-  ## Calculate the fixed point of a function. This will evaluate the function `f`
-  ## until its result settles (or Nix's recursion limit is reached). This allows
-  ## us to define recursive functions without worrying about the order of their
-  ## definitions.
-  ##
-  ## @type (a -> a) -> a
+  /**
+     Calculate the fixed point of a function. This will evaluate the function `f`
+     until its result settles (or Nix's recursion limit is reached). This allows
+     us to define recursive functions without worrying about the order of their
+     definitions.
+
+     # Inputs
+
+     `f`
+
+     : 1\. Function argument
+
+     # Type
+
+     ```
+     fix :: (a -> a) -> a
+     ```
+  */
   fix =
     f:
     let
