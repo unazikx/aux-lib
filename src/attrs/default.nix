@@ -1,14 +1,29 @@
+/**
+  Functions to work with attribute sets.
+*/
 lib: {
-  ## Merge two attribute sets at the base level.
-  ##
-  ## @type Attrs a b c => a -> b -> c
+  /**
+    Merge two attribute sets at the base level.
+
+    # Type
+
+    ```
+    merge :: Attrs a b c => a -> b -> c
+    ```
+  */
   merge = x: y: x // y;
 
-  ## Merge two attribute sets recursively until a given predicate returns true.
-  ## Any values that are _not_ attribute sets will be overridden with the value
-  ## from `y` first if it exists and then `x` otherwise.
-  ##
-  ## @type Attrs a b c => (String -> Any -> Any -> Bool) -> a -> b -> c
+  /**
+    Merge two attribute sets recursively until a given predicate returns true.
+    Any values that are _not_ attribute sets will be overridden with the value
+    from `y` first if it exists and then `x` otherwise.
+
+    # Type
+
+    ```
+    mergeRecursiveUntil :: Attrs a b c => ([String] -> Any -> Any -> Bool) -> a -> b -> c
+    ```
+  */
   mergeRecursiveUntil =
     predicate: x: y:
     let
@@ -36,20 +51,32 @@ lib: {
         y
       ];
 
-  ## Merge two attribute sets recursively. Any values that are _not_ attribute sets
-  ## will be overridden with the value from `y` first if it exists and then `x`
-  ## otherwise.
-  ##
-  ## @type Attrs a b c => a -> b -> c
+  /**
+    Merge two attribute sets recursively. Any values that are _not_ attribute sets
+    will be overridden with the value from `y` first if it exists and then `x`
+    otherwise.
+
+    # Type
+
+    ```
+    mergeRecursive :: Attrs a b c => a -> b -> c
+    ```
+  */
   mergeRecursive = lib.attrs.mergeRecursiveUntil (
     path: x: y:
     !(builtins.isAttrs x && builtins.isAttrs y)
   );
 
-  ## Get a value from an attribute set by a path. If the path does not exist,
-  ## a fallback value will be returned instead.
-  ##
-  ## @type (List String) -> a -> Attrs -> a | b
+  /**
+    Get a value from an attribute set by path. If the path does not exist,
+    a fallback value will be returned instead.
+
+    # Type
+
+    ```
+    select :: [String] -> a -> Attrs -> a | b
+    ```
+  */
   select =
     path: fallback: target:
     let
@@ -63,10 +90,16 @@ lib: {
     else
       fallback;
 
-  ## Get a value from an attribute set by a path. If the path does not exist,
-  ## an error will be thrown.
-  ##
-  ## @type (List String) -> Attrs -> a
+  /**
+    Get a value from an attribute set by path. If the path does not exist,
+    an error will be thrown.
+
+    # Type
+
+    ```
+    selectOrThrow :: [String] -> Attrs -> Any
+    ```
+  */
   selectOrThrow =
     path: target:
     let
@@ -75,9 +108,15 @@ lib: {
     in
     if lib.attrs.has path target then lib.attrs.select path null target else error;
 
-  ## Zip specific attributes from a list of attribute sets.
-  ##
-  ## @type List String -> (List Any -> Any) -> List Attrs -> Attrs
+  /**
+    Zip specific attributes from a list of attribute sets.
+
+    # Type
+
+    ```
+    zipWithNames :: [String] -> (String -> [a] -> b) -> [Attrs] -> Attrs
+    ```
+  */
   zipWithNames =
     names: f: list:
     let
@@ -89,9 +128,15 @@ lib: {
     in
     builtins.listToAttrs results;
 
-  ## Match an attribute set against a pattern.
-  ##
-  ## @type Attrs -> Attrs -> Bool
+  /**
+    Match an attribute set against a pattern.
+
+    # Type
+
+    ```
+    match :: Attrs -> Attrs -> Bool
+    ```
+  */
   match =
     pattern: value:
     let
@@ -117,9 +162,15 @@ lib: {
     assert lib.errors.trace (builtins.isAttrs value) "Value must be an attribute set";
     builtins.all lib.fp.id (builtins.attrValues result);
 
-  ## Create a nested attribute set with a value as the leaf node.
-  ##
-  ## @type (List String) -> a -> Attrs
+  /**
+    Create a nested attribute set with the value as the leaf node.
+
+    # Type
+
+    ```
+    set :: [String] -> Any -> Attrs
+    ```
+  */
   set =
     path: value:
     let
@@ -129,9 +180,15 @@ lib: {
     in
     process 0;
 
-  ## Check if a path exists in an attribute set.
-  ##
-  ## @type (List String) -> Attrs -> Bool
+  /**
+    Check if a path exists in an attribute set.
+
+    # Type
+
+    ```
+    has :: [String] -> Attrs -> Bool
+    ```
+  */
   has =
     path: target:
     let
@@ -145,26 +202,49 @@ lib: {
     else
       false;
 
-  ## Depending on a given condition, either use the given value or an empty
-  ## attribute set.
-  ##
-  ## @type Attrs a b => Bool -> a -> a | b
+  /**
+    Depending on a given condition, either use the given value or an empty attribute set.
+
+    # Type
+
+    ```
+    when :: Attrs a => Bool -> a -> a | {}
+    ```
+  */
   when = condition: value: if condition then value else { };
 
-  ## Map an attribute set's names and values to a list.
-  ##
-  ## @type Any a => (String -> Any -> a) -> Attrs -> List a
+  /**
+    Map an attribute set's names and values to a list.
+
+    # Type
+
+    ```
+    mapToList :: Any a => (String -> Any -> a) -> Attrs -> [a]
+    ```
+  */
   mapToList = f: target: builtins.map (name: f name target.${name}) (builtins.attrNames target);
 
-  ## Map an attribute set recursively. Only non-set leaf nodes will be mapped.
-  ##
-  ## @type (List String -> Any -> Any) -> Attrs -> Attrs
+  /**
+    Map an attribute set recursively. Only non-set leaf nodes will be mapped.
+
+    # Type
+
+    ```
+    mapRecursive :: ([String] -> Any -> Any) -> Attrs -> Attrs
+    ```
+  */
   mapRecursive = f: target: lib.attrs.mapRecursiveWhen (lib.fp.const true) f target;
 
-  ## Map an attribute set recursively when a given predicate returns true.
-  ## Only leaf nodes according to the predicate will be mapped.
-  ##
-  ## @type (Attrs -> Bool) -> (List String -> Any -> Any) -> Attrs -> Attrs
+  /**
+    Map an attribute set recursively when a given predicate returns true.
+    Only leaf nodes according to the predicate will be mapped.
+
+    # Type
+
+    ```
+    mapRecursiveWhen :: (Attrs -> Bool) -> ([String] -> Any -> Any) -> Attrs -> Attrs
+    ```
+  */
   mapRecursiveWhen =
     predicate: f: target:
     let
@@ -180,10 +260,16 @@ lib: {
     in
     process [ ] target;
 
-  ## Filter an attribute set by a given predicate. The filter is only performed
-  ## on the base level of the attribute set.
-  ##
-  ## @type (String -> Any -> Bool) -> Attrs -> Attrs
+  /**
+    Filter an attribute set by a given predicate. The filter is only performed
+    on the base level of the attribute set.
+
+    # Type
+
+    ```
+    filter :: (String -> Any -> Bool) -> Attrs -> Attrs
+    ```
+  */
   filter =
     predicate: target:
     let
@@ -198,10 +284,16 @@ lib: {
     in
     builtins.listToAttrs valid;
 
-  ## Generate an attribute set from a list of names and a function that is
-  ## applied to each name.
-  ##
-  ## @type (List String) -> (String -> Any) -> Attrs
+  /**
+    Generate an attribute set from a list of names and a function that is
+    applied to each name.
+
+    # Type
+
+    ```
+    generate :: [String] -> (String -> Any) -> Attrs
+    ```
+  */
   generate =
     names: f:
     let
