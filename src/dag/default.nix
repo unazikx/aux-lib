@@ -1,13 +1,13 @@
 lib: {
   validate = {
-    ## Check that a value is a DAG entry.
-    ##
-    ## @type a -> Bool
+    /**
+      Check that a value is a DAG entry.
+    */
     entry = value: (value ? value) && (value ? before) && (value ? after);
 
-    ## Check that a value is a DAG.
-    ##
-    ## @type a -> Bool
+    /**
+      Check that a value is a DAG.
+    */
     graph =
       value:
       let
@@ -17,9 +17,15 @@ lib: {
   };
 
   sort = {
-    ## Apply a topological sort to a DAG.
-    ##
-    ## @type Dag a -> { result :: List a } | { cycle :: List a, loops :: List a }
+    /**
+      Apply a topological sort to a DAG.
+
+      # Type
+
+      ```
+      topological :: Dag a -> { result :: [a] } | { cycle :: [a], loops :: [a] }
+      ```
+    */
     topological =
       graph:
       let
@@ -56,10 +62,16 @@ lib: {
   };
 
   apply = {
-    ## Apply a set of defaults to a graph. This will ensure that missing entries are added
-    ## and any entries that do exist are given the appropriate `before` and `after` values.
-    ##
-    ## @type Dag a -> Dag a -> Dag a
+    /**
+      Apply a set of defaults to a graph. This will ensure that missing entries are added
+      and any entries that do exist are given the appropriate `before` and `after` values.
+
+      # Type
+
+      ```
+      defaults :: Dag a => a -> a -> a
+      ```
+    */
     defaults =
       graph: defaults:
       let
@@ -85,37 +97,73 @@ lib: {
       defaults // result;
   };
 
-  ## Map over the entries in a DAG and modify their values.
-  ##
-  ## @type (String -> a -> b) -> Dag a -> Dag b
+  /**
+    Map over the entries in a DAG and modify their values.
+
+    # Type
+
+    ```
+    map :: (String -> a -> b) -> Dag a -> Dag b
+    ```
+  */
   map = f: builtins.mapAttrs (name: value: value // { value = f name value.value; });
 
   entry = {
-    ## Create a new DAG entry.
-    ##
-    ## @type List String -> List String -> a -> { before :: List String, after :: List String, value :: a }
+    /**
+      Create a new DAG entry.
+
+      # Type
+
+      ```
+      between :: [String] -> [String] -> a -> { before :: [String], after :: [String], value :: a }
+      ```
+    */
     between = after: before: value: { inherit before after value; };
 
-    ## Create a new DAG entry with no dependencies.
-    ##
-    ## @type a -> { before :: List String, after :: List String, value :: a }
+    /**
+      Create a new DAG entry with no dependencies.
+
+      # Type
+
+      ```
+      anywhere :: a -> { before :: [String], after :: [String], value :: a }
+      ```
+    */
     anywhere = lib.dag.entry.between [ ] [ ];
 
-    ## Create a new DAG entry that occurs before other entries.
-    ##
-    ## @type List String -> a -> { before :: List String, after :: List String, value :: a }
+    /**
+      Create a new DAG entry that occurs before other entries.
+
+      # Type
+
+      ```
+      before :: [String] -> a -> { before :: [String], after :: [String], value :: a }
+      ```
+    */
     before = before: lib.dag.entry.between [ ] before;
 
-    ## Create a new DAG entry that occurs after other entries.
-    ##
-    ## @type List String -> a -> { before :: List String, after :: List String, value :: a }
+    /**
+      Create a new DAG entry that occurs after other entries.
+
+      # Type
+
+      ```
+      after :: [String] -> a -> { before :: [String], after :: [String], value :: a }
+      ```
+    */
     after = after: lib.dag.entry.between after [ ];
   };
 
   entries = {
-    ## Create a DAG from a list of entries, prefixed with a tag.
-    ##
-    ## @type String -> List String -> List String -> List a -> Dag a
+    /**
+      Create a DAG from a list of entries, prefixed with a tag.
+
+      # Type
+
+      ```
+      between :: String -> [String] -> [String] -> [a] -> Dag a
+      ```
+    */
     between =
       tag:
       let
@@ -135,19 +183,37 @@ lib: {
       in
       process 0;
 
-    ## Create a DAG from a list of entries, prefixed with a tag, that can occur anywhere.
-    ##
-    ## @type String -> List a -> Dag a
+    /**
+      Create a DAG from a list of entries, prefixed with a tag, that can occur anywhere.
+
+      # Type
+
+      ```
+      anywhere :: String -> [a] -> Dag a
+      ```
+    */
     anywhere = tag: lib.dag.entries.between tag [ ] [ ];
 
-    ## Create a DAG from a list of entries, prefixed with a tag, that occurs before other entries.
-    ##
-    ## @type String -> List String -> List a -> Dag a
+    /**
+      Create a DAG from a list of entries, prefixed with a tag, that occurs before other entries.
+
+      # Type
+
+      ```
+      before :: String -> [String] -> [a] -> Dag a
+      ```
+    */
     before = tag: before: lib.dag.entries.between tag [ ] before;
 
-    ## Create a DAG from a list of entries, prefixed with a tag, that occurs after other entries.
-    ##
-    ## @type String -> List String -> List a -> Dag a
+    /**
+      Create a DAG from a list of entries, prefixed with a tag, that occurs after other entries.
+
+      # Type
+
+      ```
+      before :: String -> [String] -> [a] -> Dag a
+      ```
+    */
     after = tag: after: lib.dag.entries.between tag after [ ];
   };
 }
