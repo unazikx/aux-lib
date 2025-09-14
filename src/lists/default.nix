@@ -1,17 +1,29 @@
 lib: {
   from = {
-    ## Convert a value to a list. If the value is already a list,
-    ## it will be returned as-is. If the value is not a list, it
-    ## will be wrapped in a list.
-    ##
-    ## @type a | (List a) -> List a
+    /**
+      Convert a value to a list. If the value is already a list,
+      it will be returned as-is. If the value is not a list, it
+      will be wrapped in a list.
+
+      # Type
+
+      ```
+      any :: a | [a] -> [a]
+      ```
+    */
     any = value: if builtins.isList value then value else [ value ];
   };
 
   sort = {
-    ## Perform a natural sort on a list of strings.
-    ##
-    ## @type List String -> List String
+    /**
+      Perform a natural sort on a list of strings.
+
+      # Type
+
+      ```
+      natural :: [String] -> [String]
+      ```
+    */
     natural =
       list:
       let
@@ -30,10 +42,16 @@ lib: {
       in
       builtins.map (x: builtins.elemAt x 1) (builtins.sort isLess prepared);
 
-    ## Perform a topological sort on a list of items. The predicate function determines whether
-    ## its first argument comes before the second argument.
-    ##
-    ## @type (a -> a -> Bool) -> List a -> List a
+    /**
+      Perform a topological sort on a list of items. The predicate function determines whether
+      its first argument comes before the second argument.
+
+      # Type
+
+      ```
+      topological :: (a -> a -> Bool) -> [a] -> [a]
+      ```
+    */
     topological =
       predicate: list:
       let
@@ -54,10 +72,16 @@ lib: {
   };
 
   search = {
-    ## Perform a depth first search on a list. The supplied predicate function determines whether
-    ## its first argument comes before the second argument.
-    ##
-    ## @type Bool -> (a -> a -> Bool) -> List a
+    /**
+      Perform a depth first search on a list. The supplied predicate function determines whether
+      its first argument comes before the second argument.
+
+      # Type
+
+      ```
+      depthFirst :: Bool -> (a -> a -> Bool) -> [a] -> a
+      ```
+    */
     depthFirst =
       isAcyclical: predicate: list:
       let
@@ -102,24 +126,42 @@ lib: {
     map = f: domain: builtins.map f (lib.lists.cartesian.product domain);
   };
 
-  ## Map a list using both the index and value of each item. The
-  ## index starts at 0.
-  ##
-  ## @type (Int -> a -> b) -> List a -> List b
+  /**
+    Map a list using both the index and value of each item. The
+    index starts at 0.
+
+    # Type
+
+    ```
+    mapWithIndex :: (Int -> a -> b) -> [a] -> [b]
+    ```
+  */
   mapWithIndex = f: list: builtins.genList (i: f i (builtins.elemAt list i)) (builtins.length list);
 
-  ## Map a list using both the index and value of each item. The
-  ## index starts at 1.
-  ##
-  ## @type (Int -> a -> b) -> List a -> List b
+  /**
+    Map a list using both the index and value of each item. The
+    index starts at 1.
+
+    # Type
+
+    ```
+    mapWithIndex1 :: (Int -> a -> b) -> [a] -> [b]
+    ```
+  */
   mapWithIndex1 =
     f: list: builtins.genList (i: f (i + 1) (builtins.elemAt list i)) (builtins.length list);
 
-  ## Compare two lists using a custom compare function. The compare
-  ## function is called for each element in the lists that need to
-  ## be compared.
-  ##
-  ## @type (a -> b -> -1 | 0 | 1) -> List a -> List b -> Int
+  /**
+    Compare two lists using a custom compare function. The compare
+    function is called for each element in the lists that need to
+    be compared.
+
+    # Type
+
+    ```
+    compare :: (a -> b -> -1 | 0 | 1) -> [a] -> [b] -> Int
+    ```
+  */
   compare =
     compare: a: b:
     let
@@ -134,17 +176,29 @@ lib: {
     else
       result;
 
-  ## Get the last element of a list.
-  ##
-  ## @type List a -> a
+  /**
+    Get the last element of a list.
+
+    # Type
+
+    ```
+    last :: [a] -> a
+    ```
+  */
   last =
     list:
     assert lib.errors.trace (list != [ ]) "List cannot be empty";
     builtins.elemAt list (builtins.length list - 1);
 
-  ## Slice part of a list to create a new list.
-  ##
-  ## @type Int -> Int -> List -> List
+  /**
+    Slice part of a list to create a new list.
+
+    # Type
+
+    ```
+    slice :: Int -> Int -> [a] -> [a]
+    ```
+  */
   slice =
     start: count: list:
     let
@@ -159,14 +213,26 @@ lib: {
     in
     builtins.genList (i: builtins.elemAt list (start + i)) resultLength;
 
-  ## Take the first n elements of a list.
-  ##
-  ## @type Int -> List -> List
+  /**
+    Take the first n elements of a list.
+
+    # Type
+
+    ```
+    take :: Int -> [a] -> [a]
+    ```
+  */
   take = lib.lists.slice 0;
 
-  ## Drop the first n elements of a list.
-  ##
-  ## @type Int -> List -> List
+  /**
+    Drop the first n elements of a list.
+
+    # Type
+
+    ```
+    drop :: Int -> [a] -> [a]
+    ```
+  */
   drop =
     count: list:
     let
@@ -174,17 +240,29 @@ lib: {
     in
     lib.lists.slice count listLength list;
 
-  ## Take all but the last element of a list.
-  ##
-  ## @type List -> List
+  /**
+    Take all but the last element of a list.
+
+    # Type
+
+    ```
+    init :: [a] -> [a]
+    ```
+  */
   init =
     list:
     assert lib.errors.trace (builtins.length list != 0) "lib.lists.init: list must not be empty.";
     lib.lists.take (builtins.length list - 1) list;
 
-  ## Reverse a list.
-  ##
-  ## @type List -> List
+  /**
+    Reverse a list.
+
+    # Type
+
+    ```
+    reverse :: [a] -> [a]
+    ```
+  */
   reverse =
     list:
     let
@@ -193,9 +271,15 @@ lib: {
     in
     builtins.genList create length;
 
-  ## Interleave a list with a separator.
-  ##
-  ## @type Separator -> List -> List
+  /**
+    Interleave a list with a separator.
+
+    # Type
+
+    ```
+    intersperse :: Any -> [a] -> [a]
+    ```
+  */
   intersperse =
     separator: list:
     let
@@ -211,29 +295,53 @@ lib: {
         ]) list
       );
 
-  ## Create a list of integers from a starting number to an ending
-  ## number. This *includes* the ending number as well.
-  ##
-  ## @type Int -> Int -> List
+  /**
+    Create a list of integers from a starting number to an ending
+    number. This *includes* the ending number as well.
+
+    # Type
+
+    ```
+    range :: Int -> Int -> [Int]
+    ```
+  */
   range = start: end: if start > end then [ ] else builtins.genList (i: start + i) (end - start + 1);
 
-  ## Depending on a given condition, either use the given value (as
-  ## a list) or an empty list.
-  ##
-  ## @type Attrs a b => Bool -> a -> a | b
+  /**
+    Depending on a given condition, either use the given value (as
+    a list) or an empty list.
+
+    # Type
+
+    ```
+    when :: Bool -> a -> a | []
+    ```
+  */
   when =
     condition: value: if condition then if builtins.isList value then value else [ value ] else [ ];
 
-  ## Count the number of items in a list that satisfy a given predicate.
-  ##
-  ## @type (a -> Bool) -> List a -> Int
+  /**
+    Count the number of items in a list that satisfy a given predicate.
+
+    # Type
+
+    ```
+    count :: (a -> Bool) -> [a] -> Int
+    ```
+  */
   count =
     predicate: list:
     builtins.foldl' (total: value: if predicate value then total + 1 else total) 0 list;
 
-  ## Remove duplicate items from a list.
-  ##
-  ## @type List -> List
+  /**
+    Remove duplicate items from a list.
+
+    # Type
+
+    ```
+    unique :: [a] -> [a]
+    ```
+  */
   unique =
     list:
     let
@@ -241,9 +349,15 @@ lib: {
     in
     builtins.foldl' filter [ ] list;
 
-  ## Flatten a list of lists into a single list.
-  ##
-  ## @type List (List a) -> List a
+  /**
+    Flatten a list of lists into a single list.
+
+    # Type
+
+    ```
+    flatten :: [[a]] -> [a]
+    ```
+  */
   flatten =
     value: if builtins.isList value then builtins.concatMap lib.lists.flatten value else [ value ];
 }
