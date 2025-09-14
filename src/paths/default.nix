@@ -1,8 +1,14 @@
 lib: {
   into = {
-    ## Convert a path into a derivation.
-    ##
-    ## @type Path -> Derivation
+    /**
+      Convert a path into a derivation.
+
+      # Type
+
+      ```
+      drv :: Path -> Derivation
+      ```
+    */
     drv =
       value:
       let
@@ -20,9 +26,15 @@ lib: {
   };
 
   validate = {
-    ## Check whether a path is contained within the Nix store.
-    ##
-    ## @type Path -> Bool
+    /**
+      Check whether a path is contained within the Nix store.
+
+      # Type
+
+      ```
+      store :: Path -> Bool
+      ```
+    */
     store =
       value:
       if lib.strings.validate.stringifiable value then
@@ -32,34 +44,64 @@ lib: {
         false;
   };
 
-  ## Create a search path from a list of paths.
-  ##
-  ## @type String -> [String] -> String
+  /**
+    Create a search path from a list of paths.
+
+    # Type
+
+    ```
+    search :: String -> [String] -> String
+    ```
+  */
   search =
     target: paths:
     lib.strings.concatMapSep ":" (path: path + "/" + target) (
       builtins.filter (value: value != null) paths
     );
 
-  ## Create a search path from a list of packages.
-  ##
-  ## @type String -> [Derivation] -> String
+  /**
+    Create a search path from a list of packages.
+
+    # Type
+
+    ```
+    searchFromOutput :: String -> String -> [Derivation] -> String
+    ```
+  */
   searchFromOutput =
     output: target: packages:
     lib.paths.search target (builtins.map (lib.packages.getOutput output) packages);
 
-  ## Create a search path for the binary output of a package.
-  ##
-  ## @type [Derivation] -> String
+  /**
+    Create a search path for the binary output of a package.
+
+    # Type
+
+    ```
+    bin :: [Derivation] -> String
+    ```
+  */
   bin = lib.paths.searchFromOutput "bin" "bin";
 
-  ## Create a search path for the library output of a package.
-  ##
-  ## @type [Derivation] -> String
+  /**
+    Create a search path for the library output of a package.
+
+    # Type
+
+    ```
+    lib :: [Derivation] -> String
+    ```
+  */
   lib = lib.paths.searchFromOutput "lib" "lib";
 
-  ## Create a search path for the include output of a package.
-  ##
-  ## @type [Derivation] -> String
+  /**
+    Create a search path for the include output of a package.
+
+    # Type
+
+    ```
+    include :: [Derivation] -> String
+    ```
+  */
   include = lib.paths.searchFromOutput "dev" "include";
 }
