@@ -1,13 +1,25 @@
 lib: {
   into = {
-    ## Convert a character to an integer.
-    ##
-    ## @type String -> Integer
+    /**
+      Convert a character to an integer.
+
+      # Type
+
+      ```
+      int :: String -> Int
+      ```
+    */
     int = char: builtins.getAttr char lib.strings.ascii;
 
-    ## Convert a string into a list of characters.
-    ##
-    ## @type String -> List String
+    /**
+      Convert a string into a list of characters.
+
+      # Type
+
+      ```
+      chars :: String -> [String]
+      ```
+    */
     chars =
       value:
       let
@@ -17,9 +29,15 @@ lib: {
       builtins.map pick range;
 
     shell = {
-      ## Convert a value into a shell variable.
-      ##
-      ## @type String -> Any -> String
+      /**
+        Convert a value into a shell variable.
+
+        # Type
+
+        ```
+        var :: String -> Any -> String
+        ```
+      */
       var =
         name: target:
         let
@@ -41,18 +59,30 @@ lib: {
         else
           baseVar;
 
-      ## Create shell variables for a map of values.
-      ##
-      ## @type Attrs -> String
+      /**
+        Create shell variables from a map of values.
+
+        # Type
+
+        ```
+        vars :: Attrs -> String
+        ```
+      */
       vars =
         target: builtins.concatStringsSep "\n" (lib.attrs.mapToList lib.strings.into.shell.var target);
     };
   };
 
   escape = {
-    ## Escape parts of a string.
-    ##
-    ## @type List String -> String -> String
+    /**
+      Escape parts of a string.
+
+      # Type
+
+      ```
+      any :: [String] -> String -> String
+      ```
+    */
     any =
       patterns: source:
       let
@@ -61,10 +91,16 @@ lib: {
       in
       replacer source;
 
-    ## Escape a given set of characters in a string using their
-    ## ASCII code prefixed with "\x".
-    ##
-    ## @type List String -> String
+    /**
+      Escape a given set of characters in a string using their
+      ASCII code prefixed with "\x".
+
+      # Type
+
+      ```
+      c :: [String] -> String
+      ```
+    */
     c =
       list:
       let
@@ -78,14 +114,26 @@ lib: {
       builtins.replaceStrings list (builtins.map serialize list);
 
     nix = {
-      ## Escape a string of Nix code.
-      ##
-      ## @type String -> String
+      /**
+        Escape a string of Nix code.
+
+        # Type
+
+        ```
+        value :: String -> String
+        ```
+      */
       value = value: lib.strings.escape.any [ "$" ] (builtins.toJSON value);
 
-      ## Escape a string for use as a Nix identifier.
-      ##
-      ## @type String -> String
+      /**
+        Escape a string for use as a Nix identifier.
+
+        # Type
+
+        ```
+        identifier :: String -> String
+        ```
+      */
       identifier =
         value:
         if builtins.match "[a-zA-Z_][a-zA-Z0-9_'-]*" value != null then
@@ -94,14 +142,26 @@ lib: {
           lib.strings.escape.nix.value value;
     };
 
-    ## Escape a string for use in a regular expression.
-    ##
-    ## @type String -> String
+    /**
+      Escape a string for use in a regular expression.
+
+      # Type
+
+      ```
+      regex :: String -> String
+      ```
+    */
     regex = lib.strings.escape.any (lib.strings.into.chars "\\[{()^$?*+|.");
 
-    ## Escape a string for use in XML.
-    ##
-    ## @type String -> String
+    /**
+      Escape a string for use in XML.
+
+      # Type
+
+      ```
+      xml :: String -> String
+      ```
+    */
     xml =
       builtins.replaceStrings
         [
@@ -120,56 +180,104 @@ lib: {
         ];
 
     shell = {
-      ## Escape a string for use as a shell argument.
-      ##
-      ## @type String -> String
+      /**
+        Escape a string for use as a shell argument.
+
+        # Type
+
+        ```
+        arg :: String -> String
+        ```
+      */
       arg = value: "'${builtins.replaceStrings [ "'" ] [ "'\\''" ] (builtins.toString value)}'";
 
-      ## Escape multiple strings for use as shell arguments.
-      ##
-      ## @type List String -> String
+      /**
+        Escape multiple strings for use as shell arguments.
+
+        # Type
+
+        ```
+        arg :: [String] -> String
+        ```
+      */
       args = lib.strings.concatMapSep " " lib.strings.escape.shell.arg;
     };
   };
 
   validate = {
-    ## Check if a string is a valid POSIX identifier.
-    ##
-    ## @type String -> Bool
+    /**
+      Check if a string is a valid POSIX identifier.
+
+      # Type
+
+      ```
+      posix :: String -> Bool
+      ```
+    */
     posix = name: builtins.match "[a-zA-Z_][a-zA-Z0-9_]*" name != null;
 
-    ## Check if a value can be used as a string.
-    ##
-    ## @type Any -> Bool
+    /**
+      Check if a value can be used as a string.
+
+      # Type
+
+      ```
+      stringifiable :: Any -> Bool
+      ```
+    */
     stringifiable =
       value: builtins.isString value || builtins.isPath value || value ? outPath || value ? __toString;
 
-    ## Check whether a string is empty. This includes strings that
-    ## only contain whitespace.
-    ##
-    ## @type String -> Bool
+    /**
+      Check whether a string is empty. This includes strings that
+      only contain whitespace.
+
+      # Type
+
+      ```
+      empty :: String -> Bool
+      ```
+    */
     empty = value: builtins.match "[ \t\n]*" value != null;
   };
 
   order = {
-    ## Create an ordered string that will be placed anywhere.
-    ##
-    ## @type String -> OrderedString
+    /**
+      Create an ordered string that will be placed anywhere.
+
+      # Type
+
+      ```
+      anywhere :: String -> OrderedString
+      ```
+    */
     anywhere = value: {
       inherit value;
       deps = [ ];
     };
 
-    ## Create an ordered string that will be placed before its dependencies.
-    ##
-    ## @type String -> List String -> OrderedString
+    /**
+      Create an ordered string that will be placed anywhere.
+
+      # Type
+
+      ```
+      after :: String -> [String] -> OrderedString
+      ```
+    */
     after = deps: value: { inherit deps value; };
 
-    ## Apply the order for a list of ordered strings. This function also supports
-    ## plain strings in the list so long as they have an accompanying static definition
-    ## provided.
-    ##
-    ## @type Attrs -> List (OrderedString | String)
+    /**
+      Apply the order for a list of ordered strings. This function also supports
+      plain strings in the list so long as they have an accompanying static definition
+      provided.
+
+      # Type
+
+      ```
+      apply :: Attrs -> [OrderedString | String]
+      ```
+    */
     apply =
       static: items:
       let
@@ -199,57 +307,117 @@ lib: {
       processed.result;
   };
 
-  ## Return a given string if a condition is true, otherwise return
-  ## an empty string.
-  ##
-  ## @type Bool -> String -> String
+  /**
+    Return a given string if a condition is true, otherwise return
+    an empty string.
+
+    # Type
+
+    ```
+    when :: Bool -> String -> String
+    ```
+  */
   when = condition: value: if condition then value else "";
 
-  ## A table of ASCII characters mapped to their integer character code.
-  ##
-  ## @type Attrs
+  /**
+    A table of ASCII characters mapped to their integer character code.
+
+    # Type
+
+    ```
+        ascii :: Attrs
+    ```
+  */
   ascii = import ./ascii.nix;
 
-  ## Lists of both upper and lower case ASCII characters.
-  ##
-  ## @type { upper :: List String, lower :: List String }
+  /**
+    Lists of both upper and lower case ASCII characters.
+
+    # Type
+
+    ```
+    alphabet :: { upper :: [String], lower :: [String] }
+    ```
+  */
   alphabet = import ./alphabet.nix;
 
-  ## Concatenate a list of strings together.
-  ##
-  ## @type List String -> String
+  /**
+    Concatenate a list of strings together.
+
+    # Type
+
+    ```
+    concat :: [String] -> String
+    ```
+  */
   concat = builtins.concatStringsSep "";
 
-  ## Concatenate and map a list of strings together.
-  ##
-  ## @type List String -> String
+  /**
+    Concatenate and map a list of strings together.
+
+    # Type
+
+    ```
+    concatMap :: [String] -> String
+    ```
+  */
   concatMap = lib.strings.concatMapSep "";
 
-  ## Concatenate and map a list of strings together with a separator.
-  ##
-  ## @type String -> (a -> String) -> List a -> String
+  /**
+    Concatenate and map a list of strings together with a separator.
+
+    # Type
+
+    ```
+    concatMapSep :: String -> (a -> String) -> [a] -> String
+    ```
+  */
   concatMapSep =
     separator: f: list:
     builtins.concatStringsSep separator (builtins.map f list);
 
-  ## Change a string to uppercase.
-  ##
-  ## @type String -> String
+  /**
+    Change a string to uppercase.
+
+    # Type
+
+    ```
+    upper :: String -> String
+    ```
+  */
   upper = builtins.replaceStrings lib.strings.alphabet.lower lib.strings.alphabet.upper;
 
-  ## Change a string to lowercase.
-  ##
-  ## @type String -> String
+  /**
+    Change a string to lowercase.
+
+    # Type
+
+    ```
+    lower :: String -> String
+    ```
+  */
   lower = builtins.replaceStrings lib.strings.alphabet.upper lib.strings.alphabet.lower;
 
-  ## Add the context of one string to another.
-  ##
-  ## @type String -> String -> String
+  /**
+    Add the context of one string to another.
+
+    # Type
+
+    ```
+    withContext :: String -> String -> String
+    ```
+  */
   withContext = context: value: builtins.substring 0 0 context + value;
 
-  ## Split a string by a separator.
-  ##
-  ## @type String -> String -> List String
+  /**
+    Split a string by a separator.
+
+    # Type
+
+    ```
+    split :: String -> String -> [String]
+    ```
+  */
   split =
     separator: value:
     let
@@ -259,9 +427,15 @@ lib: {
     in
     builtins.map (lib.strings.withContext value) parts;
 
-  ## Check if a string starts with a given prefix.
-  ##
-  ## @type String -> String -> Bool
+  /**
+    Check if a string starts with a given prefix.
+
+    # Type
+
+    ```
+    hasPrefix :: String -> String -> Bool
+    ```
+  */
   hasPrefix =
     prefix: value:
     let
@@ -269,9 +443,15 @@ lib: {
     in
     text == prefix;
 
-  ## Check if a string ends with a given suffix.
-  ##
-  ## @type String -> String -> Bool
+  /**
+    Check if a string ends with a given suffix.
+
+    # Type
+
+    ```
+    hasSuffix :: String -> String -> Bool
+    ```
+  */
   hasSuffix =
     suffix: value:
     let
@@ -281,14 +461,26 @@ lib: {
     in
     (valueLength >= suffixLength) && text == suffix;
 
-  ## Check if a string contains a given infix.
-  ##
-  ## @type String -> String -> Bool
+  /**
+    Check if a string contains a given infix.
+
+    # Type
+
+    ```
+    hasInfix :: String -> String -> Bool
+    ```
+  */
   hasInfix = infix: value: builtins.match ".*${lib.strings.escape.regex infix}.*" "${value}" != null;
 
-  ## Remove a prefix from a string if it exists.
-  ##
-  ## @type String -> String -> String
+  /**
+    Remove a prefix from a string if it exists.
+
+    # Type
+
+    ```
+    removePrefix :: String -> String -> String
+    ```
+  */
   removePrefix =
     prefix: value:
     let
@@ -300,9 +492,15 @@ lib: {
     else
       value;
 
-  ## Remove a suffix from a string if it exists.
-  ##
-  ## @type String -> String -> String
+  /**
+    Remove a suffix from a string if it exists.
+
+    # Type
+
+    ```
+    removeSuffix :: String -> String -> String
+    ```
+  */
   removeSuffix =
     suffix: value:
     let
@@ -314,10 +512,16 @@ lib: {
     else
       value;
 
-  ## Pad the start of a string with a character until it reaches
-  ## a given length.
-  ##
-  ## @type Integer -> String -> String
+  /**
+    Pad the start of a string with a character until it reaches
+    a given length.
+
+    # Type
+
+    ```
+    padStart :: Int -> String -> String
+    ```
+  */
   padStart =
     length: char: value:
     let
@@ -326,10 +530,16 @@ lib: {
     in
     if valueLength < length then (builtins.concatStringsSep "" padding) + value else value;
 
-  ## Pad the end of a string with a character until it reaches
-  ## a given length.
-  ##
-  ## @type Integer -> String -> String
+  /**
+    Pad the end of a string with a character until it reaches
+    a given length.
+
+    # Type
+
+    ```
+    padEnd :: Int -> String -> String
+    ```
+  */
   padEnd =
     length: char: value:
     let
