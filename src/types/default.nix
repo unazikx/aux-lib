@@ -1,21 +1,39 @@
 lib: {
-  ## Determine whether a given value is a certain type. Note that this is *not*
-  ## the same as primitive Nix types. Types created with `lib.type` are attribute
-  ## sets with a `__type__` symbol.
-  ##
-  ## @type String -> Attrs -> Bool
+  /**
+    Determine whether a given value is a certain type. Note that this is *not*
+    the same as primitive Nix types. Types created with `lib.type` are attribute
+    sets with a `__type__` symbol.
+
+    # Type
+
+    ```
+    is :: String -> Attrs -> Bool
+    ```
+  */
   is = name: value: value.__type__ or null == name;
 
-  ## Assign a type to an attribute set.
-  ##
-  ## @type String -> Attrs -> Attrs
+  /**
+    Assign a type to an attribute set.
+
+    # Type
+
+    ```
+    set :: String -> Attrs -> Attrs
+    ```
+  */
   set = name: value: value // { __type__ = name; };
 
-  ## Create a default functor for a type. This handles merging of type values
-  ## by referencing wrapped and payload values. See the types implemented below
-  ## such as `lib.types.any` for examples.
-  ##
-  ## @type String -> Attrs
+  /**
+    Create a default functor for a type. This handles merging of type values
+    by referencing wrapped and payload values. See the types implemented below
+    such as `lib.types.any` for examples.
+
+    # Type
+
+    ```
+    functor :: String -> Attrs
+    ```
+  */
   functor = name: {
     inherit name;
     type = lib.attrs.select (lib.strings.split "." name) null lib.types;
@@ -24,9 +42,15 @@ lib: {
     merge = null;
   };
 
-  ## Merge two types.
-  ##
-  ## @type Attrs -> Attrs -> Attrs
+  /**
+    Merge two types.
+
+    # Type
+
+    ```
+    merge :: Attrs -> Attrs -> Attrs
+    ```
+  */
   merge =
     f: g:
     let
@@ -44,9 +68,15 @@ lib: {
     else
       null;
 
-  ## Create a new type.
-  ##
-  ## @type Attrs -> Attrs
+  /**
+    Create a new type.
+
+    # Type
+
+    ```
+    create :: Attrs -> Attrs
+    ```
+  */
   create =
     settings@{
       name,
@@ -78,14 +108,26 @@ lib: {
         ;
     };
 
-  ## Add a check to a type.
-  ##
-  ## @type Attrs -> (Any -> Bool) -> Attrs
+  /**
+    Add a check to a type.
+
+    # Type
+
+    ```
+    withCheck :: Attrs -> (Any -> Bool) -> Attrs
+    ```
+  */
   withCheck = type: check: type // { check = value: type.check value && check value; };
 
-  ## A type that allows any value and will only use a single definition.
-  ##
-  ## @type Attrs
+  /**
+    A type that allows any value and will only use a single definition.
+
+    # Type
+
+    ```
+    raw :: Attrs
+    ```
+  */
   raw = lib.types.create {
     name = "Raw";
     description = "raw value";
@@ -93,10 +135,16 @@ lib: {
     merge = lib.options.merge.one;
   };
 
-  ## A type that allows any value and will merge the definitions depending on
-  ## their data type.
-  ##
-  ## @type Attrs
+  /**
+    A type that allows any value and will merge the definitions depending on
+    their data type.
+
+    # Type
+
+    ```
+    any :: Attrs
+    ```
+  */
   any = lib.types.create {
     name = "Any";
     description = "any";
@@ -161,18 +209,30 @@ lib: {
       merge location definitions;
   };
 
-  ## A fallback type that is used when a type is not specified for an option.
-  ##
-  ## @type Attrs
+  /**
+    A fallback type that is used when a type is not specified for an option.
+
+    # Type
+
+    ```
+    unspecified :: Attrs
+    ```
+  */
   unspecified = lib.types.create {
     name = "Unspecified";
     description = "unspecified type";
   };
 
-  ## A type that allows a boolean value. The merged definitions must all be
-  ## the same.
-  ##
-  ## @type Attrs
+  /**
+    A type that allows a boolean value. The merged definitions must all be
+    the same.
+
+    # Type
+
+    ```
+    bool :: Attrs
+    ```
+  */
   bool = lib.types.create {
     name = "Bool";
     description = "boolean";
@@ -180,10 +240,16 @@ lib: {
     merge = lib.options.merge.equal;
   };
 
-  ## A type that allows an integer value. The merged definitions must all be
-  ## the same.
-  ##
-  ## @type Attrs
+  /**
+    A type that allows an integer value. The merged definitions must all be
+    the same.
+
+    # Type
+
+    ```
+    int :: Attrs
+    ```
+  */
   int = lib.types.create {
     name = "Int";
     description = "signed integer";
@@ -194,9 +260,15 @@ lib: {
   ints =
     let
       description = start: end: "${builtins.toString start} and ${builtins.toString end} (inclusive)";
-      ## Create a type that allows an integer value between a given range.
-      ##
-      ## @type Int -> Int -> Attrs
+      /**
+        Create a type that allows an integer value between a given range.
+
+        # Type
+
+        ```
+        between :: Int -> Int -> Attrs
+        ```
+      */
       between =
         start: end:
         assert lib.errors.trace (
@@ -208,10 +280,16 @@ lib: {
           description = "integer between ${description start end}";
         };
 
-      ## Create a type that allows an integer value between a given range with a specific
-      ## number of bits.
-      ##
-      ## @type Int -> Int -> Attrs
+      /**
+        Create a type that allows an integer value between a given range with a specific
+        number of bits.
+
+        # Type
+
+        ```
+        sign :: Int -> Int -> Attrs
+        ```
+      */
       sign =
         bits: range:
         let
@@ -224,10 +302,16 @@ lib: {
           description = "${builtins.toString bits} bit signed integer between ${description start end}";
         };
 
-      ## Create a type that allows an unsigned integer value between a given range with a specific
-      ## number of bits.
-      ##
-      ## @type Int -> Int -> Attrs
+      /**
+        Create a type that allows an unsigned integer value between a given range with a specific
+        number of bits.
+
+        # Type
+
+        ```
+        unsign :: Int -> Int -> Attrs
+        ```
+      */
       unsign =
         bits: range:
         let
@@ -243,59 +327,113 @@ lib: {
     {
       inherit between;
 
-      ## A type that allows a positive integer value.
-      ##
-      ## @type Attrs
+      /**
+        A type that allows a positive integer value.
+
+        # Type
+
+        ```
+        positive :: Attrs
+        ```
+      */
       positive = lib.types.withCheck lib.types.int (value: value > 0) // {
         name = "IntPositive";
         description = "positive integer";
       };
 
-      ## A type that allows a positive integer value or zero.
-      ##
-      ## @type Attrs
+      /**
+        A type that allows a positive integer value or zero.
+
+        # Type
+
+        ```
+        unsigned :: Attrs
+        ```
+      */
       unsigned = lib.types.withCheck lib.types.int (value: value >= 0) // {
         name = "IntUnsigned";
         description = "unsigned integer";
       };
 
-      ## A type that allows an 8bit unsigned integer.
-      ##
-      ## @type Attrs
+      /**
+        A type that allows an 8bit unsigned integer.
+
+        # Type
+
+        ```
+        u8 :: Attrs
+        ```
+      */
       u8 = unsign 8 256;
 
-      ## A type that allows a 16bit unsigned integer.
-      ##
-      ## @type Attrs
+      /**
+        A type that allows a 16bit unsigned integer.
+
+        # Type
+
+        ```
+        u16 :: Attrs
+        ```
+      */
       u16 = unsign 16 65536;
 
-      ## A type that allows a 32bit unsigned integer.
-      ##
-      ## @type Attrs
+      /**
+        A type that allows a 32bit unsigned integer.
+
+        # Type
+
+        ```
+        u32 :: Attrs
+        ```
+      */
       u32 = unsign 32 4294967296;
 
       # u64 = unsign 64 18446744073709551616;
 
-      ## A type that allows an 8bit signed integer.
-      ##
-      ## @type Attrs
+      /**
+        A type that allows an 8bit signed integer.
+
+        # Type
+
+        ```
+        s8 :: Attrs
+        ```
+      */
       s8 = sign 8 256;
 
-      ## A type that allows a 16bit signed integer.
-      ##
-      ## @type Attrs
+      /**
+        A type that allows a 16bit signed integer.
+
+        # Type
+
+        ```
+        s16 :: Attrs
+        ```
+      */
       s16 = sign 16 65536;
 
-      ## A type that allows a 32bit signed integer.
-      ##
-      ## @type Attrs
+      /**
+        A type that allows a 32bit signed integer.
+
+        # Type
+
+        ```
+        s32 :: Attrs
+        ```
+      */
       s32 = sign 32 4294967296;
     };
 
-  ## A type that allows a floating point value. The merged definitions must all be
-  ## the same.
-  ##
-  ## @type Attrs
+  /**
+    A type that allows a floating point value. The merged definitions must all be
+    the same.
+
+    # Type
+
+    ```
+    float :: Attrs
+    ```
+  */
   float = lib.types.create {
     name = "Float";
     description = "floating point number";
@@ -303,17 +441,29 @@ lib: {
     merge = lib.options.merge.equal;
   };
 
-  ## A type that allows a number value. This can be either an integer or a float.
-  ##
-  ## @type Attrs
+  /**
+    A type that allows a number value. This can be either an integer or a float.
+
+    # Type
+
+    ```
+    number :: Attrs
+    ```
+  */
   number = lib.types.either lib.types.int lib.types.float;
 
   numbers =
     let
       description = start: end: "${builtins.toString start} and ${builtins.toString end} (inclusive)";
-      ## Create a type that allows a number value between a given range.
-      ##
-      ## @type Int -> Int -> Attrs
+      /**
+        Create a type that allows a number value between a given range.
+
+        # Type
+
+        ```
+        between :: Int -> Int -> Attrs
+        ```
+      */
       between =
         start: end:
         assert lib.errors.trace (
@@ -328,31 +478,55 @@ lib: {
     {
       inherit between;
 
-      ## A type that allows a positive number value.
-      ##
-      ## @type Attrs
+      /**
+        A type that allows a positive number value.
+
+        # Type
+
+        ```
+        positive :: Attrs
+        ```
+      */
       positive = lib.types.withCheck lib.types.int (value: value > 0) // {
         name = "NumberPositive";
         description = "positive number";
       };
 
-      ## A type that allows a positive number value or zero.
-      ##
-      ## @type Attrs
+      /**
+        A type that allows a positive number value or zero.
+
+        # Type
+
+        ```
+        positiveOrZero :: Attrs
+        ```
+      */
       positiveOrZero = lib.types.withCheck lib.types.int (value: value >= 0) // {
         name = "NumberPositiveOrZero";
         description = "number that is zero or greater";
       };
     };
 
-  ## A type that allows a port value. This values an unsigned 16bit integer.
-  ##
-  ## @type Attrs
+  /**
+    A type that allows a port value. This values an unsigned 16bit integer.
+
+    # Type
+
+    ```
+    port :: Attrs
+    ```
+  */
   port = lib.types.ints.u16;
 
-  ## A type that allows a string value specifying a version number.
-  ##
-  ## @type Attrs
+  /**
+    A type that allows a string value specifying a version number.
+
+    # Type
+
+    ```
+    version :: Attrs
+    ```
+  */
   version = lib.types.create {
     name = "Version";
     description = "version";
@@ -365,10 +539,16 @@ lib: {
     merge = lib.options.merge.equal;
   };
 
-  ## A type that allows a string value. The merged definitions must all be
-  ## the same.
-  ##
-  ## @type Attrs
+  /**
+    A type that allows a string value. The merged definitions must all be
+    the same.
+
+    # Type
+
+    ```
+    string :: Attrs
+    ```
+  */
   string = lib.types.create {
     name = "String";
     description = "string";
@@ -377,10 +557,16 @@ lib: {
   };
 
   strings = {
-    ## A type that allows a non-empty string value. The merged definitions must all be
-    ## the same.
-    ##
-    ## @type Attrs
+    /**
+      A type that allows a non-empty string value. The merged definitions must all be
+      the same.
+
+      # Type
+
+      ```
+      required :: Attrs
+      ```
+    */
     required = lib.types.create {
       name = "StringNonEmpty";
       description = "non-empty string";
@@ -388,10 +574,16 @@ lib: {
       merge = lib.options.merge.equal;
     };
 
-    ## Create a type that allows a string value that matches a given pattern. The merged
-    ## definitions must all be the same.
-    ##
-    ## @type String -> Attrs
+    /**
+      Create a type that allows a string value that matches a given pattern. The merged
+      definitions must all be the same.
+
+      # Type
+
+      ```
+      matching :: String -> Attrs
+      ```
+    */
     matching =
       pattern:
       lib.types.create {
@@ -401,10 +593,16 @@ lib: {
         merge = lib.options.merge.equal;
       };
 
-    ## Create a type that allows a string value joined by a separator. The merged
-    ## definitions must all be the same.
-    ##
-    ## @type String -> Attrs
+    /**
+      Create a type that allows a string value joined by a separator. The merged
+      definitions must all be the same.
+
+      # Type
+
+      ```
+      matching :: String -> Attrs
+      ```
+    */
     concat =
       separator:
       lib.types.create {
@@ -424,10 +622,16 @@ lib: {
         };
       };
 
-    ## A type that allows a string value that is a single line with an optional new line
-    ## at the end.
-    ##
-    ## @type Attrs
+    /**
+      A type that allows a string value that is a single line with an optional new line
+      at the end.
+
+      # Type
+
+      ```
+      line :: Attrs
+      ```
+    */
     line =
       let
         matcher = lib.types.strings.matching "[^\n\r]*\n?";
@@ -439,16 +643,28 @@ lib: {
         merge = location: definitions: lib.strings.removeSuffix "\n" (matcher.merge location definitions);
       };
 
-    ## A type that allows a string value joined by new lines.
-    ##
-    ## @type Attrs
+    /**
+      A type that allows a string value joined by new lines.
+
+      # Type
+
+      ```
+      lines :: Attrs
+      ```
+    */
     lines = lib.types.strings.concat "\n";
   };
 
   attrs = {
-    ## A type that allows an attribute set containing any type of value.
-    ##
-    ## @type Attrs
+    /**
+      A type that allows an attribute set containing any type of value.
+
+      # Type
+
+      ```
+      any :: Attrs
+      ```
+    */
     any = lib.types.create {
       name = "Attrs";
       description = "attribute set";
@@ -461,9 +677,15 @@ lib: {
         builtins.foldl' (result: definition: result // definition.value) { } definitions;
     };
 
-    ## Create a type that allows an attribute set containing a specific type of value.
-    ##
-    ## @type Attrs -> Attrs
+    /**
+      Create a type that allows an attribute set containing a specific type of value.
+
+      # Type
+
+      ```
+      of :: Attrs -> Attrs
+      ```
+    */
     of =
       type:
       lib.types.create {
@@ -499,11 +721,17 @@ lib: {
         };
       };
 
-    ## Create a type that allows an attribute set containing a specific type of value.
-    ## However, unlike `lib.types.attrs.of` this variant is lazily evaluated and does
-    ## not support certain properties like `lib.modules.when`.
-    ##
-    ## @type Attrs -> Attrs
+    /**
+      Create a type that allows an attribute set containing a specific type of value.
+      However, unlike `lib.types.attrs.of` this variant is lazily evaluated and does
+      not support certain properties like `lib.modules.when`.
+
+      # Type
+
+      ```
+      lazy :: Attrs -> Attrs
+      ```
+    */
     lazy =
       type:
       lib.types.create {
@@ -543,9 +771,15 @@ lib: {
       };
   };
 
-  ## A type that allows a derivation (or store path).
-  ##
-  ## @type Attrs
+  /**
+    A type that allows a derivation (or store path).
+
+    # Type
+
+    ```
+    derivation :: Attrs
+    ```
+  */
   derivation = lib.types.create {
     name = "Derivation";
     description = "derivation";
@@ -562,18 +796,30 @@ lib: {
   };
 
   derivations = {
-    ## A type that allows a shell derivation. This is a derivation with an accompanying
-    ## `shellPath` attribute.
-    ##
-    ## @type Attrs
+    /**
+      A type that allows a shell derivation. This is a derivation with an accompanying
+      `shellPath` attribute.
+
+      # Type
+
+      ```
+      shell :: Attrs
+      ```
+    */
     shell = lib.types.derivation // {
       check = value: lib.packages.isDerivation value && builtins.hasAttr "shellPath" value;
     };
   };
 
-  ## A type that allows a path value. The merged definitions must all be the same.
-  ##
-  ## @type Attrs
+  /**
+    A type that allows a path value. The merged definitions must all be the same.
+
+    # Type
+
+    ```
+    path :: Attrs
+    ```
+  */
   path = lib.types.create {
     name = "Path";
     description = "path";
@@ -584,14 +830,26 @@ lib: {
   };
 
   list = {
-    ## A type that allows a list containing any value.
-    ##
-    ## @type Attrs
+    /**
+      A type that allows a list containing any value.
+
+      # Type
+
+      ```
+      any :: Attrs
+      ```
+    */
     any = lib.types.list.of lib.types.any;
 
-    ## Create a type that allows a list containing a specific type of value.
-    ##
-    ## @type Attrs -> Attrs
+    /**
+      Create a type that allows a list containing a specific type of value.
+
+      # Type
+
+      ```
+      of :: Attrs -> Attrs
+      ```
+    */
     of =
       type:
       lib.types.create {
@@ -640,9 +898,15 @@ lib: {
         };
       };
 
-    ## A type that allows a non-empty list containing a specific type of value.
-    ##
-    ## @type Attrs -> Attrs
+    /**
+      A type that allows a non-empty list containing a specific type of value.
+
+      # Type
+
+      ```
+      required :: Attrs -> Attrs
+      ```
+    */
     required =
       type:
       lib.types.withCheck (lib.types.list.of type) (value: value != [ ])
@@ -652,9 +916,15 @@ lib: {
       };
   };
 
-  ## Create a type that must be a unique value.
-  ##
-  ## @type String -> Attrs -> Attrs
+  /**
+    Create a type that must be a unique value.
+
+    # Type
+
+    ```
+    unique :: String -> Attrs -> Attrs
+    ```
+  */
   unique =
     message: type:
     lib.types.create {
@@ -674,10 +944,16 @@ lib: {
       };
     };
 
-  ## Create a type that must be a single value. Unlike `lib.types.unique`, this type
-  ## does not merge the definitions.
-  ##
-  ## @type Attrs -> Attrs
+  /**
+    Create a type that must be a single value. Unlike `lib.types.unique`, this type
+    does not merge the definitions.
+
+    # Type
+
+    ```
+    single :: Attrs -> Attrs
+    ```
+  */
   single =
     type:
     lib.types.create {
@@ -697,9 +973,15 @@ lib: {
       };
     };
 
-  ## Create a type that may be either a given type or null.
-  ##
-  ## @type Attrs -> Attrs
+  /**
+    Create a type that may be either a given type or null.
+
+    # Type
+
+    ```
+    nullish :: Attrs -> Attrs
+    ```
+  */
   nullish =
     type:
     lib.types.create {
@@ -734,9 +1016,15 @@ lib: {
       };
     };
 
-  ## Create a type that allows a function which returns a given type.
-  ##
-  ## @type Attrs -> Attrs
+  /**
+    Create a type that allows a function which returns a given type.
+
+    # Type
+
+    ```
+    function :: Attrs -> Attrs
+    ```
+  */
   function =
     type:
     lib.types.create {
@@ -765,17 +1053,29 @@ lib: {
       };
     };
 
-  ## Create a submodule from a list of modules (or a module directly).
-  ##
-  ## @type (Module | (List Module)) -> Attrs
+  /**
+    Create a submodule from a list of modules (or a module directly).
+
+    # Type
+
+    ```
+    submodule :: Module | [Module] -> Attrs
+    ```
+  */
   submodule = modules: lib.types.submodules.of { modules = lib.lists.from.any modules; };
 
   submodules = {
-    ## Create a type from a list of submodules. This is particularly useful for use
-    ## with helpers like `lib.types.attrs.of` in order to produce more complex,
-    ## dynamic types.
-    ##
-    ## @type { modules :: List Module, args? :: Attrs, description? :: String | Null, shorthand? :: Bool } -> Attrs
+    /**
+      Create a type from a list of submodules. This is particularly useful for use
+      with helpers like `lib.types.attrs.of` in order to produce more complex,
+      dynamic types.
+
+      # Type
+
+      ```
+      of :: { modules :: [Module], args? :: Attrs, description? :: String | Null, shorthand? :: Bool } -> Attrs
+      ```
+    */
     of =
       settings@{
         modules,
@@ -901,9 +1201,15 @@ lib: {
         };
       };
 
-    ## Create a type from a submodule which can be used in multiple parts of the configuration.
-    ##
-    ## @type { module :: Module, name? :: String, description? :: String } -> Attrs
+    /**
+      Create a type from a submodule which can be used in multiple parts of the configuration.
+
+      # Type
+
+      ```
+      portable :: { module :: Module, name? :: String, description? :: String } -> Attrs
+      ```
+    */
     portable =
       {
         name ? "PortableSubmodule",
@@ -1030,15 +1336,27 @@ lib: {
   };
 
   deferred = {
-    ## A module that is imported in another part of the configuration.
-    ##
-    ## @type Attrs
+    /**
+      A module that is imported in another part of the configuration.
+
+      # Type
+
+      ```
+      default :: Attrs
+      ```
+    */
     default = lib.types.deferred.of { modules = [ ]; };
 
-    ## Create a submodule type from a list of modules which will be imported in
-    ## another part of the configuration.
-    ##
-    ## @type { modules :: List Module } -> Attrs
+    /**
+      Create a submodule type from a list of modules which will be imported in
+      another part of the configuration.
+
+      # Type
+
+      ```
+      of :: { modules :: [Module] } -> Attrs
+      ```
+    */
     of =
       settings@{ modules }:
       let
@@ -1069,9 +1387,15 @@ lib: {
       };
   };
 
-  ## A type that allows a Type.
-  ##
-  ## @type Attrs
+  /**
+    A type that allows a Type.
+
+    # Type
+
+    ```
+    type :: Attrs
+    ```
+  */
   type = lib.types.create {
     name = "Type";
     description = "type";
@@ -1079,9 +1403,15 @@ lib: {
     merge = lib.options.merge.one;
   };
 
-  ## A type that allows an Option.
-  ##
-  ## @type Attrs
+  /**
+    A type that allows an Option.
+
+    # Type
+
+    ```
+    option :: Attrs
+    ```
+  */
   option = lib.types.create {
     name = "Option";
     description = "option";
@@ -1099,9 +1429,15 @@ lib: {
       if builtins.length definitions == 1 then first.value else merged.type;
   };
 
-  ## Create a type that allows a specific primitive value from a given list.
-  ##
-  ## @type List Any -> Attrs
+  /**
+    Create a type that allows a specific primitive value from a given list.
+
+    # Type
+
+    ```
+    enum :: [Any] -> Attrs
+    ```
+  */
   enum =
     values:
     let
@@ -1133,9 +1469,15 @@ lib: {
       };
     };
 
-  ## Create a type that allows either of two types.
-  ##
-  ## @type Attrs -> Attrs -> Attrs
+  /**
+    Create a type that allows either of two types.
+
+    # Type
+
+    ```
+    either :: Attrs -> Attrs -> Attrs
+    ```
+  */
   either =
     left: right:
     let
@@ -1179,9 +1521,15 @@ lib: {
       };
     };
 
-  ## Create a type that allows a value of one of the given types.
-  ##
-  ## @type List Attrs -> Attrs
+  /**
+    Create a type that allows a value of one of the given types.
+
+    # Type
+
+    ```
+    one :: [Attrs] -> Attrs
+    ```
+  */
   one =
     types:
     let
@@ -1193,10 +1541,16 @@ lib: {
     else
       builtins.foldl' lib.types.either first rest;
 
-  ## Create a type that allows a value which is either the final type or is transformable
-  ## to the final type.
-  ##
-  ## @type Attrs -> (Any -> Any) -> Attrs -> Attrs
+  /**
+    Create a type that allows a value which is either the final type or is transformable
+    to the final type.
+
+    # Type
+
+    ```
+    coerce :: Attrs -> (Any -> Any) -> Attrs -> Attrs
+    ```
+  */
   coerce =
     initial: transform: final:
     let
@@ -1229,10 +1583,16 @@ lib: {
         };
       };
 
-  ## Create a type that allows a value which is either the final type or is transformable
-  ## to the final type.
-  ##
-  ## @type Attrs -> (Any -> Any) -> Attrs -> Attrs
+  /**
+    Create a type that allows a value which is either the final type or is transformable
+    to the final type.
+
+    # Type
+
+    ```
+    coerceWithLocation :: Attrs -> (Any -> Any) -> Attrs -> Attrs
+    ```
+  */
   coerceWithLocation =
     initial: transform: final:
     let
@@ -1267,9 +1627,15 @@ lib: {
       };
 
   dag = {
-    ## Create a type that allows a DAG (Directed Acyclic Graph) of a given type.
-    ##
-    ## @type Attrs -> Attrs
+    /**
+      Create a type that allows a DAG (Directed Acyclic Graph) of a given type.
+
+      # Type
+
+      ```
+      of :: Attrs -> Attrs
+      ```
+    */
     of =
       type:
       let
@@ -1293,9 +1659,15 @@ lib: {
         };
       };
 
-    ## Create a type that allows a DAG entry of a given type.
-    ##
-    ## @type Attrs -> Attrs
+    /**
+      Create a type that allows a DAG entry of a given type.
+
+      # Type
+
+      ```
+      entry :: Attrs -> Attrs
+      ```
+    */
     entry =
       type:
       let
