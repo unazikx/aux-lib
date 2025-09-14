@@ -1,18 +1,28 @@
 lib: {
   from = {
-    ## Create a module from a JSON file.
-    ##
-    ## @notest
-    ## @type Path -> Module
+    /**
+      Create a module from a JSON file.
+
+      # Type
+
+      ```
+      json :: Path -> Module
+      ```
+    */
     json = file: {
       __file__ = file;
       config = lib.importers.json file;
     };
 
-    ## Create a module from a TOML file.
-    ##
-    ## @notest
-    ## @type Path -> Module
+    /**
+      Create a module from a TOML file.
+
+      # Type
+
+      ```
+      json :: Path -> Module
+      ```
+    */
     toml = file: {
       __file__ = file;
       config = lib.importers.toml file;
@@ -20,12 +30,18 @@ lib: {
   };
 
   apply = {
-    ## Apply custom definitions such as `merge` and `when` to a definition.
-    ## Note that this function does not perform actiosn like `merge`, but
-    ## instead pulls out the merge contents to be processed by the module
-    ## system.
-    ##
-    ## @type Definition -> List (Definition | (List Definition))
+    /**
+      Apply custom definitions such as `merge` and `when` to a definition.
+      Note that this function does not perform actions like `merge`, but
+      instead pulls out the merge contents to be processed by the module
+      system.
+
+      # Type
+
+      ```
+      properties :: Definition -> [Definition | [Definition]]
+      ```
+    */
     properties =
       definition:
       if lib.types.is "merge" definition then
@@ -40,11 +56,17 @@ lib: {
       else
         [ definition ];
 
-    ## Apply overrides for a definition. This uses the priority system
-    ## to determine which definition to use. The most important (lowest
-    ## priority) choice will be used.
-    ##
-    ## @type List Definition -> { highestPriority :: Int, values :: List (Definition | (List Definition)) }
+    /**
+      Apply overrides for a definition. This uses the priority system
+      to determine which definition to use. The most important (lowest
+      priority) choice will be used.
+
+      # Type
+
+      ```
+      overrides :: Definition -> { highestPriority :: Int, values :: [Definition | [Definition]] }
+      ```
+    */
     overrides =
       definitions:
       let
@@ -71,9 +93,15 @@ lib: {
         ) definitions;
       };
 
-    ## Apply ordering for prioritized definitions.
-    ##
-    ## @type List Definition -> List Definition
+    /**
+      Apply ordering for prioritized definitions.
+
+      # Type
+
+      ```
+      order :: [Definition] -> [Definition]
+      ```
+    */
     order =
       definitions:
       let
@@ -93,10 +121,16 @@ lib: {
       in
       builtins.sort compare normalized;
 
-    ## Normalize an option. This will set a default type if none was
-    ## provided, and remove any property override wrapping
-    ##
-    ## @type List String -> Option -> Option
+    /**
+      Normalize an option. This will set a default type if none was
+      provided, and remove any property override wrapping.
+
+      # Type
+
+      ```
+      fixup :: [String] -> Option -> Option
+      ```
+    */
     fixup =
       location: option:
       let
@@ -123,13 +157,19 @@ lib: {
         // getNormalized "description"
         // getNormalized "apply";
 
-    ## Invert the structure of `merge`, `when`, and `override` definitions so
-    ## that they apply to each individual attribute in their respective sets.
-    ## Note that this function _only_ supports attribute sets within specialized
-    ## definitions such as `when` and `override`. Other values like lists will
-    ## throw a type error.
-    ##
-    ## @type Definition -> List Definition
+    /**
+      Invert the structure of `merge`, `when`, and `override` definitions so
+      that they apply to each individual attribute in their respective sets.
+      Note that this function _only_ supports attribute sets within specialized
+      definitions such as `when` and `override`. Other values like lists will
+      throw a type error.
+
+      # Type
+
+      ```
+      invert :: Definition -> [Definition]
+      ```
+    */
     invert =
       config:
       if lib.types.is "merge" config then
@@ -147,9 +187,15 @@ lib: {
   };
 
   validate = {
-    ## Check that a module only specifies supported attributes.
-    ##
-    ## @type Attrs -> Bool
+    /**
+      Check that a module only specifies supported attributes.
+
+      # Type
+
+      ```
+      keys :: Attrs -> Bool
+      ```
+    */
     keys =
       module:
       let
@@ -158,10 +204,16 @@ lib: {
       invalid == { };
   };
 
-  ## Modules only support certain keys at the root level. This list determines
-  ## the valid attributes that users can supply.
-  ##
-  ## @type List String
+  /**
+    Modules only support certain keys at the root level. This list determines
+    the valid attributes that users can supply.
+
+    # Type
+
+    ```
+    VALID_KEYS :: [String]
+    ```
+  */
   VALID_KEYS = [
     "__file__"
     "__key__"
@@ -173,10 +225,16 @@ lib: {
     "meta"
   ];
 
-  ## Normalize a module to a standard structure. All other information will be
-  ## lost in the conversion.
-  ##
-  ## @type String -> String -> Attrs -> Module
+  /**
+    Normalize a module to a standard structure. All other information will be
+    lost in the conversion.
+
+    # Type
+
+    ```
+    normalize :: String -> String -> Attrs -> Module
+    ```
+  */
   normalize =
     file: key: module:
     let
@@ -217,11 +275,17 @@ lib: {
     else
       builtins.throw "Module `${key}` (${file}) has unsupported attribute(s): ${invalidKeys}";
 
-  ## Convert a module that is either a function or an attribute set into
-  ## a resolved attribute set. If the module was a function then it will
-  ## be evaluated and the result will be returned.
-  ##
-  ## @type String -> Attrs | (Attrs -> Attrs) -> Attrs -> Attrs
+  /**
+    Convert a module that is either a function or an attribute set into
+    a resolved attribute set. If the module was a function, then it will
+    be evaluated and the result will be returned.
+
+    # Type
+
+    ```
+    resolve :: String -> Attrs | (Attrs -> Attrs) -> Attrs -> Attrs
+    ```
+  */
   resolve =
     key: module: args:
     let
@@ -239,115 +303,194 @@ lib: {
     in
     if builtins.isFunction module then lib.fp.withDynamicArgs module (args // dynamicArgs) else module;
 
-  ## The default priority to set for values that do not have one provided.
-  ##
-  ## @type Int
+  /**
+    The default priority to set for values that do not have one provided.
+
+    # Type
+
+    ```
+    DEFAULT_PRIORITY :: Int
+    ```
+  */
   DEFAULT_PRIORITY = 100;
 
-  ## Allow for sorting the values provided to a module by priority. The
-  ## most important value will be used.
-  ##
-  ## @notest
-  ## @type Int -> a -> Attrs
+  /**
+    Allow for sorting the values provided to a module by priority. The
+    most important value will be used.
+
+    # Type
+
+    ```
+    order :: Int -> Any -> Attrs
+    ```
+  */
   order = priority: value: {
     __type__ = "order";
     inherit priority value;
   };
 
   orders = {
-    ## Order a value before others.
-    ##
-    ## @notest
-    ## @type a -> Attrs
+    /**
+      Order a value before others.
+
+      # Type
+
+      ```
+      before :: Any -> Attrs
+      ```
+    */
     before = lib.modules.order 500;
 
-    ## Use the default ordering for a value.
-    ##
-    ## @notest
-    ## @type a -> Attrs
+    /**
+      Use the default ordering for a value.
+
+      # Type
+
+      ```
+      default :: Any -> Attrs
+      ```
+    */
     default = lib.modules.order 1000;
 
-    ## Order a value after others.
-    ##
-    ## @notest
-    ## @type a -> Attrs
+    /**
+      Order a value after others.
+
+      # Type
+
+      ```
+      after :: Any -> Attrs
+      ```
+    */
     after = lib.modules.order 1500;
   };
 
-  ## Extract a list of files from a list of modules.
-  ##
-  ## @type List Module -> List (String | Path)
+  /**
+    Extract a list of files from a list of modules.
+
+    # Type
+
+    ```
+    getFiles :: [Module] -> [String | Path]
+    ```
+  */
   getFiles = builtins.map (module: module.__file__);
 
-  ## Create a conditional value which is only used when the condition's
-  ## value is `true`.
-  ##
-  ## @notest
-  ## @type Bool -> a -> When a
+  /**
+    Create a conditional value which is only used when the condition's
+    value is `true`.
+
+    # Type
+
+    ```
+    when :: Bool -> a -> When a
+    ```
+  */
   when = condition: content: {
     __type__ = "when";
     inherit condition content;
   };
 
-  ## Merge module attribute sets when evaluated in the module system.
-  ##
-  ## @notest
-  ## @type List Attrs -> Attrs
+  /**
+    Merge module attribute sets when evaluated in the module system.
+
+    # Type
+
+    ```
+    merge :: [Attrs] -> Attrs
+    ```
+  */
   merge = content: {
     __type__ = "merge";
     inherit content;
   };
 
-  ## Create a value override which can replace other definitions if it
-  ## has the higher priority.
-  ##
-  ## @notest
-  ## @type Int -> a -> Attrs
+  /**
+    Create a value override which can replace other definitions if it
+    has the higher priority.
+
+    # Type
+
+    ```
+    override :: Int -> Any -> Attrs
+    ```
+  */
   override = priority: content: {
     __type__ = "override";
     inherit priority content;
   };
 
   overrides = {
-    ## Create an override used for setting the `default.value` from an
-    ## option. This uses the lowest priority of all predefined overrides.
-    ##
-    ## @notest
-    ## @type a -> Attrs
+    /**
+      Create an override used for setting the `default.value` from an
+      option. This uses the lowest priority of all predefined overrides.
+
+      # Type
+
+      ```
+      option :: Any -> Attrs
+      ```
+    */
     option = lib.modules.override 1500;
 
-    ## Create a default override for a value. This uses a very low priority
-    ## so that it can easily be overridden.
-    ##
-    ## @notest
-    ## @type a -> Attrs
+    /**
+      Create a default override for a value. This uses a very low priority
+      so that it can easily be overriden.
+
+      # Type
+
+      ```
+      default :: Any -> Attrs
+      ```
+    */
     default = lib.modules.override 1000;
 
-    ## Create a high priority override for a value. This is not the highest
-    ## priority possible, but it will override nearly everything else except
-    ## for very explicit cases.
-    ##
-    ## @notest
-    ## @type a -> Attrs
+    /**
+      Create a high priority override for a value. This is not the highest
+      priority possible, but it will override nearly everything else except
+      for very explicit cases.
+
+      # Type
+
+      ```
+      force :: Any -> Attrs
+      ```
+    */
     force = lib.modules.override 50;
 
-    ## Create a high priority override intended to be used only for VM targets.
-    ## This allows for forcing certain values even if a user has otherwise
-    ## specified `lib.modules.overrides.force`.
-    ##
-    ## @notest
-    ## @type a -> Attrs
+    /**
+      Create a high priority override intended to be used only for VM targets.
+      This allows for forcing certain values even if a user has otherwise
+      specified `lib.modules.overrides.force`.
+
+      # Type
+
+      ```
+      vm :: Any -> Attrs
+      ```
+    */
     vm = lib.modules.override 10;
   };
 
-  ## Create alias definitions for a given option.
-  ##
-  ## @type Option -> Attrs
+  /**
+    Create alias definitions for a given option.
+
+    # Type
+
+    ```
+    alias :: Option -> Attrs
+    ```
+  */
   alias = lib.modules.aliasWith lib.fp.id;
 
-  ## Create alias definitions for a given option.
-  ##
-  ## @type (Attrs -> Attrs) -> Option -> Attrs
+  /**
+    Create alias definitions for a given option.
+
+    # Type
+
+    ```
+    aliasWith :: (Attrs -> Attrs) -> Option -> Attrs
+    ```
+  */
   aliasWith =
     f: option:
     let
@@ -356,9 +499,15 @@ lib: {
     in
     lib.modules.when exists value;
 
-  ## Combine multiple modules together.
-  ##
-  ## @type List String -> List Module -> { matched :: Attrs, unmatched :: List Definition }
+  /**
+    Combine multiple modules together.
+
+    # Type
+
+    ```
+    combine :: [String] -> [Module] -> { matched :: Attrs, unmatched :: [Definition] }
+    ```
+  */
   combine =
     prefix: modules:
     let
@@ -483,10 +632,16 @@ lib: {
     in
     process prefix modules configs;
 
-  ## Run a set of modules. Custom arguments can also be supplied which will
-  ## be provided to all modules statically as they are not modifiable.
-  ##
-  ## @type { modules? :: List (Attrs | (Attrs -> Attrs)), args? :: Attrs, prefix? :: List String } -> { type :: Module, extend :: lib.modules.run, options :: Attrs, config :: Attrs, __module__ :: Attrs }
+  /**
+    Run a set of modules. Custom arguments can also be supplied which will
+    be provided to all modules statically as they are not modifiable.
+
+    # Type
+
+    ```
+    run :: { modules? :: [Attrs | (Attrs -> Attrs)], args? :: Attrs, prefix? :: [String] } -> { type :: Module, extend :: lib.modules.run, options :: Attrs, config :: Attrs, __module__ :: Attrs }
+    ```
+  */
   run =
     settings@{
       modules ? [ ],
