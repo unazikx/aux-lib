@@ -1,14 +1,26 @@
 lib: {
-  ## Check whether a value is a derivation. Note that this will also return true
-  ## for "fake" derivations which are constructed by helpers such as
-  ## `lib.paths.into.drv` for convenience.
-  ##
-  ## @type a -> Bool
+  /**
+    Check whether a value is a derivation. Note that this will also return true
+    for "fake" derivations which are constructed by helpers such as
+    `lib.paths.into.drv` for convenience.
+
+    # Type
+
+    ```
+    isDerivation :: Any -> Bool
+    ```
+  */
   isDerivation = value: value.type or null == "derivation";
 
-  ## Sanitize a string to produce a valid name for a derivation.
-  ##
-  ## @type String -> String
+  /**
+    Sanitize a string to produce a valid name for a derivation.
+
+    # Type
+
+    ```
+    sanitizeDerivationName :: String -> String
+    ```
+  */
   sanitizeDerivationName =
     let
       validate = builtins.match "[[:alnum:]+_?=-][[:alnum:]+._?=-]*";
@@ -38,9 +50,15 @@ lib: {
         (x: if builtins.stringLength x == 0 then "unknown" else x)
       ] value;
 
-  ## Get an output of a derivation.
-  ##
-  ## @type String -> Derivation -> String
+  /**
+    Get an output of a derivation.
+
+    # Type
+
+    ```
+    getOutput :: String -> Derivation -> String
+    ```
+  */
   getOutput =
     output: package:
     if !package ? outputSpecified || !package.outputSpecified then
