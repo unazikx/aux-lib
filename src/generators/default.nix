@@ -1,7 +1,13 @@
 lib: {
-  ## Limit evaluation of a valud to a certain depth.
-  ##
-  ## @type { limit? :: Int | Null, throw? :: Bool } -> a -> a
+  /**
+    Limit evaluation of a value to a certain depth.
+
+    # Type
+
+    ```
+    withRecursion :: { limit? :: Int | Null, throw? :: Bool } -> a -> a
+    ```
+  */
   withRecursion =
     {
       limit ? null,
@@ -39,9 +45,15 @@ lib: {
     in
     process 0;
 
-  ## Create a pretty printer for Nix values.
-  ##
-  ## @type { indent? :: String, multiline? :: Bool, allowCustomPrettifiers? :: Bool } -> a -> string
+  /**
+    Create a pretty printer for Nix values.
+
+    # Type
+
+    ```
+    pretty :: { indent? :: String, multiline? :: Bool, allowCustomPrettifiers? :: Bool } -> Any -> String
+    ```
+  */
   pretty =
     {
       indent ? "",
