@@ -1,13 +1,25 @@
 lib: {
   into = {
-    ## Convert a number into a string.
-    ##
-    ## @type Int | Float -> String
+    /**
+      Convert a number into a string.
+
+      # Type
+
+      ```
+      string :: Int | Float -> String
+      ```
+    */
     string = value: if builtins.isInt value then builtins.toString value else builtins.toJSON value;
 
-    ## Convert a number into a list of digits in the given base.
-    ##
-    ## @type Int -> Int -> List Int
+    /**
+      Convert a number into a list of digits in the given base.
+
+      # Type
+
+      ```
+      base :: Int -> Int -> [Int]
+      ```
+    */
     base =
       base: target:
       let
@@ -26,9 +38,15 @@ lib: {
       assert lib.errors.trace (target >= 0) "Target cannot be negative.";
       lib.lists.reverse result;
 
-    ## Convert a number into a hexadecimal string.
-    ##
-    ## @type Int -> String
+    /**
+      Convert a number into a hexadecimal string.
+
+      # Type
+
+      ```
+      hex :: Int -> String
+      ```
+    */
     hex =
       value:
       let
@@ -54,11 +72,17 @@ lib: {
       lib.strings.concatMap serialize (lib.numbers.into.base 16 value);
   };
 
-  ## Compare two numbers. When the first number is less than the second, -1
-  ## is returned. When the first number is greater than the second, 1 is
-  ## returned. When the numbers are equal, 0 is returned.
-  ##
-  ## @type Int -> Int -> Int
+  /**
+    Compare two numbers. When the first number is less than the second, -1
+    is returned. When the first number is greater than the second, 1 is
+    returned. When the numbers are equal, 0 is returned.
+
+    # Type
+
+    ```
+    compare :: Int -> Int -> Int
+    ```
+  */
   compare =
     a: b:
     if a < b then
