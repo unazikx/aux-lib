@@ -1,8 +1,14 @@
 lib: {
   merge = {
-    ## Merge a list of option definitions into a single value.
-    ##
-    ## @type Location -> List Definition -> Any
+    /**
+      Merge a list of option definitions into a single value.
+
+      # Type
+
+      ```
+      default :: Location -> [Definition] -> Any
+      ```
+    */
     default =
       location: definitions:
       let
@@ -32,9 +38,15 @@ lib: {
       else
         builtins.throw "Cannot merge definitions.";
 
-    ## Merge multiple option definitions together.
-    ##
-    ## @type Location -> Type -> List Definition
+    /**
+      Merge multiple option definitions together.
+
+      # Type
+
+      ```
+      definitions :: Location -> Type -> [Definition]
+      ```
+    */
     definitions =
       location: type: definitions:
       let
@@ -90,9 +102,15 @@ lib: {
         };
       };
 
-    ## Merge multiple option declarations together.
-    ##
-    ## @type Location -> List Option
+    /**
+      Merge multiple option declarations together.
+
+      # Type
+
+      ```
+      declarations :: Location -> [Option]
+      ```
+    */
     declarations =
       location: options:
       let
@@ -150,9 +168,15 @@ lib: {
         options = [ ];
       } options;
 
-    ## Merge an option, only supporting a single unique definition.
-    ##
-    ## @type String -> Location -> List Definition -> Any
+    /**
+      Merge an option, only supporting a single unique definition.
+
+      # Type
+
+      ```
+      unique :: String -> Location -> [Definition] -> Any
+      ```
+    */
     unique =
       message: location: definitions:
       let
@@ -167,9 +191,15 @@ lib: {
       else
         builtins.throw "The option `${identifier}` is defined multiple times, but must be unique.\n${message}\nDefinitions:${lib.options.getDefinitions definitions}";
 
-    ## Merge a single instance of an option.
-    ##
-    ## @type Location -> List Definition -> Any
+    /**
+      Merge a single instance of an option.
+
+      # Type
+
+      ```
+      one :: Location -> [Definition] -> Any
+      ```
+    */
     one = lib.options.merge.unique "";
 
     equal =
@@ -194,14 +224,26 @@ lib: {
         merged.value;
   };
 
-  ## Check whether a value is an option.
-  ##
-  ## @type Attrs -> Bool
+  /**
+    Check whether a value is an option.
+
+    # Type
+
+    ```
+    is :: Attrs -> Bool
+    ```
+  */
   is = lib.types.is "option";
 
-  ## Create an option.
-  ##
-  ## @type { type? :: String | Null, apply? :: (a -> b) | Null, default? :: { value :: a, text :: String }, example? :: String | Null, visible? :: Bool | Null, internal? :: Bool | Null, writable? :: Bool | Null, description? :: String | Null } -> Option a
+  /**
+    Create an option.
+
+    # Type
+
+    ```
+    create :: { type? :: String | Null, apply? :: (a -> b) | Null, default? :: { value :: a, text :: String }, example? :: String | Null, visible? :: Bool | Null, internal? :: Book | Null, writable? :: Bool | Null, description? :: String | Null } -> Option a
+    ```
+  */
   create =
     settings@{
       type ? lib.types.unspecified,
@@ -227,9 +269,15 @@ lib: {
         ;
     };
 
-  ## Create a sink option.
-  ##
-  ## @type @alias lib.options.create
+  /**
+    Create a sink option.
+
+    # Type
+
+    ```
+    sink :: { type? :: String | Null, apply? :: (a -> b) | Null, default? :: { value :: a, text :: String }, example? :: String | Null, visible? :: Bool | Null, internal? :: Book | Null, writable? :: Bool | Null, description? :: String | Null } -> Option a
+    ```
+  */
   sink =
     settings:
     let
@@ -248,14 +296,26 @@ lib: {
     in
     lib.options.create (defaults // settings);
 
-  ## Get the definition values from a list of options definitions.
-  ##
-  ## @type List Definition -> Any
+  /**
+    Get the definition values form a list of options definitions.
+
+    # Type
+
+    ```
+    getDefinitionValues :: [Definition] -> Any
+    ```
+  */
   getDefinitionValues = definitions: builtins.map (definition: definition.value) definitions;
 
-  ## Convert a list of option identifiers into a single identifier.
-  ##
-  ## @type List String -> String
+  /**
+    Convert a list of option identifiers into a single identifier.
+
+    # Type
+
+    ```
+    getIdentifier :: [String] -> String
+    ```
+  */
   getIdentifier =
     location:
     let
@@ -271,9 +331,15 @@ lib: {
     in
     lib.strings.concatMapSep "." escape location;
 
-  ## Get a string message of the definitions for an option.
-  ##
-  ## @type List Definition -> String
+  /**
+    Get a string message of the definitions for an option.
+
+    # Type
+
+    ```
+    getDefinitions :: [Definition] -> String
+    ```
+  */
   getDefinitions =
     definitions:
     let
@@ -307,9 +373,15 @@ lib: {
     in
     lib.strings.concatMap serialize definitions;
 
-  ## Run a set of definitions, calculating the resolved value and associated information.
-  ##
-  ## @type Location -> Option -> List Definition -> String & { value :: Any, highestPriority :: Int, isDefined :: Bool, files :: List String, definitions :: List Any, definitionsWithLocations :: List Definition }
+  /**
+    Run a set of definitions, calculating the resolved value and associated information.
+
+    # Type
+
+    ```
+    getDefinitions :: Location -> Option -> [Definition] -> String & { value :: Any, highestPriority :: Int, isDefined :: Bool, files :: List String, definitions :: [Any], definitionsWithLocations :: [Definition] }
+    ```
+  */
   run =
     location: option: definitions:
     let
