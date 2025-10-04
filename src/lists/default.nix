@@ -30,15 +30,37 @@ lib: {
         vectorize =
           string:
           let
-            serialize = part: if builtins.isList part then lib.strings.into.int (builtins.head part) else part;
-            parts = lib.strings.split "(0|[1-9][0-9]*)" string;
+            serialize =
+              part:
+              if builtins.isList part then
+                {
+                  isNumber = true;
+                  elem = (lib.strings.into.parseInt (builtins.head part));
+                }
+              else
+                {
+                  isNumber = false;
+                  elem = part;
+                };
+            parts = builtins.split "(0|[1-9][0-9]*)" string;
           in
           builtins.map serialize parts;
         prepared = builtins.map (value: [
           (vectorize value)
           value
         ]) list;
-        isLess = a: b: (lib.lists.compare lib.numbers.compare (builtins.head a) (builtins.head b)) < 0;
+        cmpVectors =
+          a: b:
+          if a.isNumber && !b.isNumber then
+            # Numbers come even before special characters in this sorting.
+            -1
+          else if !a.isNumber && b.isNumber then
+            1
+          else
+            # lib.numbers.compare happens to be compatible with both strings
+            # and integers.
+            lib.numbers.compare a.elem b.elem;
+        isLess = a: b: (lib.lists.compare cmpVectors (builtins.head a) (builtins.head b)) < 0;
       in
       builtins.map (x: builtins.elemAt x 1) (builtins.sort isLess prepared);
 

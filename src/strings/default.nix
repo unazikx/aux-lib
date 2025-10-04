@@ -12,6 +12,30 @@ lib: {
     int = char: builtins.getAttr char lib.strings.ascii;
 
     /**
+      Convert from an ASCII representation of an integer to said integer.
+
+      # Type
+
+      ```
+      parseInt :: String -> Integer
+      ```
+    */
+    parseInt =
+      value:
+      let
+        charList = lib.strings.into.chars value;
+        charCodes = builtins.map lib.strings.into.int charList;
+        asDecimalValue =
+          charCode:
+          assert lib.errors.trace (
+            charCode >= lib.strings.ascii."0" && charCode <= lib.strings.ascii."9"
+          ) "Not a string of decimal digits: \"${value}\"";
+          charCode - lib.strings.ascii."0";
+        decimalValues = builtins.map asDecimalValue charCodes;
+      in
+      builtins.foldl' (acc: elem: 10 * acc + elem) 0 decimalValues;
+
+    /**
       Convert a string into a list of characters.
 
       # Type
