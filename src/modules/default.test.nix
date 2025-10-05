@@ -897,5 +897,18 @@ in
         };
       in
       (evaluated.config.aux.message == evaluated.config.aux.message2) && evaluated.config.aux.exists;
+
+    "check assertions" =
+      let
+        evaluated = lib.modules.run {
+          modules = [
+            {
+              assertions = [ { value = false; message = "spooky"; } ];
+            }
+          ];
+        };
+      in
+      (builtins.tryEval evaluated).success == true
+      && (builtins.tryEval evaluated.config).success == false;
   };
 }

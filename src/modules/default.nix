@@ -884,6 +884,17 @@ lib: {
               ''
           else
             builtins.throw message
+          else if config.__module__.check && merged.assertions != [ ] then
+            builtins.trace "[ WARN]: module assertions are experimental"
+            builtins.foldl'
+            (_: { value, message, file, key }:
+              if (builtins.tryEval value).value == true then null
+              else builtins.throw ''
+                Assertion failed in module `${key}` (${file}):
+                ${builtins.toString message}''
+            )
+            null
+            merged.assertions
         else
           null;
 
