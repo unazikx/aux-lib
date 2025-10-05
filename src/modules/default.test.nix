@@ -506,14 +506,14 @@ in
           }
         ];
         assertions = [
-            { value = true; message = "unreachable"; file = "/aux/example1.nix"; key = "example2"; }
+            { value = true; message = "unreachable"; file = "/aux/example1.nix"; key = "example1"; }
             { value = true; message = "unreachable"; file = "/aux/example2.nix"; key = "example2"; }
         ];
         actual =
           lib.modules.combine
             [ ]
             [
-              (lib.modules.normalize "/aux/example1.nix" "example2" {
+              (lib.modules.normalize "/aux/example1.nix" "example1" {
                 options = {
                   x = lib.options.create { };
                 };
