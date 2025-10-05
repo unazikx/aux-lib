@@ -101,7 +101,7 @@ in
             ];
           };
         in
-        (builtins.trace (builtins.deepSeq actual actual)) actual == expected;
+        actual == expected;
     };
   };
 
