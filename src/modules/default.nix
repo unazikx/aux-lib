@@ -273,30 +273,41 @@ lib: {
                 config;
           in
           withFreeform (withMeta base);
-          assertions =
-            let
-              type = builtins.typeOf module.assertions;
-              validateAssert = assertion:
-                (builtins.isAttrs assertion)
-                && (builtins.removeAttrs assertion [ "value" "message" ] == { })
-                && (assertion ? value)
-                && (assertion ? message);
-              normalizeAssert = assertion: assertion // {
+        assertions =
+          let
+            type = builtins.typeOf module.assertions;
+            validateAssert =
+              assertion:
+              (builtins.isAttrs assertion)
+              && (
+                builtins.removeAttrs assertion [
+                  "value"
+                  "message"
+                ] == { }
+              )
+              && (assertion ? value)
+              && (assertion ? message);
+            normalizeAssert =
+              assertion:
+              assertion
+              // {
                 file = __file__;
                 key = __key__;
               };
-            in
-            if ! module ? assertions then [ ]
-            else if type != "list" then
-              builtins.throw "Module `${__key__}` (${__file__}) has an 'assertions' attribute that is not a list but a ${type}"
-            else if ! builtins.all (validateAssert) module.assertions then
-              builtins.throw ''
-                Module `${__key__}` (${__file__}) has invalid assertion(s)
-                Each assertion should be a set with:
-                - a 'value' attribute, which indicates the assertion fails if and only if it is not `true`.
-                - a 'message' attribute containing the message to throw if the assertion fails.
-                No other attribute is permitted''
-              else builtins.map normalizeAssert module.assertions;
+          in
+          if !module ? assertions then
+            [ ]
+          else if type != "list" then
+            builtins.throw "Module `${__key__}` (${__file__}) has an 'assertions' attribute that is not a list but a ${type}"
+          else if !builtins.all (validateAssert) module.assertions then
+            builtins.throw ''
+              Module `${__key__}` (${__file__}) has invalid assertion(s)
+              Each assertion should be a set with:
+              - a 'value' attribute, which indicates the assertion fails if and only if it is not `true`.
+              - a 'message' attribute containing the message to throw if the assertion fails.
+              No other attribute is permitted''
+          else
+            builtins.map normalizeAssert module.assertions;
       }
     else
       builtins.throw "Module `${__key__}` (${__file__}) has unsupported attribute(s): ${invalidKeys}";
@@ -884,17 +895,22 @@ lib: {
               ''
           else
             builtins.throw message
-          else if config.__module__.check && merged.assertions != [ ] then
-            builtins.trace "[ WARN]: module assertions are experimental"
-            builtins.foldl'
-            (_: { value, message, file, key }:
-              if (builtins.tryEval value).value == true then null
-              else builtins.throw ''
+        else if config.__module__.check && merged.assertions != [ ] then
+          builtins.trace "[WARN]: module assertions are experimental" builtins.foldl' (
+            _:
+            {
+              value,
+              message,
+              file,
+              key,
+            }:
+            if (builtins.tryEval value).value == true then
+              null
+            else
+              builtins.throw ''
                 Assertion failed in module `${key}` (${file}):
                 ${builtins.toString message}''
-            )
-            null
-            merged.assertions
+          ) null merged.assertions
         else
           null;
 
