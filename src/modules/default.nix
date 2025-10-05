@@ -299,7 +299,7 @@ lib: {
               else builtins.map normalizeAssert module.assertions;
       }
     else
-      builtins.throw "Module `${key}` (${file}) has unsupported attribute(s): ${invalidKeys}";
+      builtins.throw "Module `${__key__}` (${__file__}) has unsupported attribute(s): ${invalidKeys}";
 
   /**
     Convert a module that is either a function or an attribute set into
