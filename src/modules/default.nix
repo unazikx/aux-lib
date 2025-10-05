@@ -281,6 +281,10 @@ lib: {
                 && (builtins.removeAttrs assertion [ "value" "message" ] == { })
                 && (assertion ? value)
                 && (assertion ? message);
+              normalizeAssert = assertion: assertion // {
+                file = __file__;
+                key = __key__;
+              };
             in
             if ! module ? assertions then [ ]
             else if type != "list" then
@@ -292,7 +296,7 @@ lib: {
                 - a 'value' attribute, which indicates the assertion fails if and only if it is not `true`.
                 - a 'message' attribute containing the message to throw if the assertion fails.
                 No other attribute is permitted''
-              else module.assertions;
+              else builtins.map normalizeAssert module.assertions;
       }
     else
       builtins.throw "Module `${key}` (${file}) has unsupported attribute(s): ${invalidKeys}";
