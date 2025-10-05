@@ -186,6 +186,7 @@ in
             __key__ = "aux/example";
             includes = [ ];
             excludes = [ ];
+            assertions = [ ];
             options = { };
             config = { };
             freeform = null;
@@ -374,6 +375,7 @@ in
           config = { };
           excludes = [ ];
           includes = [ ];
+          assertions = [ ];
           options = { };
         };
         actual = lib.modules.normalize "/aux/example.nix" "example" { };
@@ -390,6 +392,7 @@ in
           };
           excludes = [ ];
           includes = [ ];
+          assertions = [ ];
           options = { };
         };
         actual = lib.modules.normalize "/aux/example.nix" "example" {
@@ -445,6 +448,7 @@ in
         expected = {
           matched = { };
           unmatched = [ ];
+          assertions = [ ];
         };
         actual = lib.modules.combine [ ] [ (lib.modules.normalize "/aux/example.nix" "example" { }) ];
       in
@@ -461,6 +465,9 @@ in
               value = 1;
             }
           ];
+          assertions = [
+            { value = true; message = "unreachable"; }
+          ];
         };
         actual =
           lib.modules.combine
@@ -470,6 +477,7 @@ in
                 config = {
                   x = 1;
                 };
+                assertions = [ { value = true; message = "unreachable"; } ];
               })
             ];
       in
