@@ -186,6 +186,7 @@ in
             __key__ = "aux/example";
             includes = [ ];
             excludes = [ ];
+            assertions = [ ];
             options = { };
             config = { };
             freeform = null;
@@ -374,6 +375,7 @@ in
           config = { };
           excludes = [ ];
           includes = [ ];
+          assertions = [ ];
           options = { };
         };
         actual = lib.modules.normalize "/aux/example.nix" "example" { };
@@ -390,6 +392,7 @@ in
           };
           excludes = [ ];
           includes = [ ];
+          assertions = [ ];
           options = { };
         };
         actual = lib.modules.normalize "/aux/example.nix" "example" {
@@ -399,6 +402,29 @@ in
         };
       in
       actual == expected;
+
+    "adds details to assertions" =
+      let
+        assertions = [
+          {
+            value = true;
+            message = "unreachable";
+            file = "myfile.nix";
+            key = "mykey";
+          }
+        ];
+        actual = lib.modules.normalize "/aux/example.nix" "example" {
+          __file__ = "myfile.nix";
+          __key__ = "mykey";
+          assertions = [
+            {
+              value = true;
+              message = "unreachable";
+            }
+          ];
+        };
+      in
+      actual.assertions == assertions;
   };
 
   "resolve" = {
@@ -445,6 +471,7 @@ in
         expected = {
           matched = { };
           unmatched = [ ];
+          assertions = [ ];
         };
         actual = lib.modules.combine [ ] [ (lib.modules.normalize "/aux/example.nix" "example" { }) ];
       in
@@ -461,6 +488,14 @@ in
               value = 1;
             }
           ];
+          assertions = [
+            {
+              value = true;
+              message = "unreachable";
+              file = "/aux/example.nix";
+              key = "example";
+            }
+          ];
         };
         actual =
           lib.modules.combine
@@ -470,6 +505,12 @@ in
                 config = {
                   x = 1;
                 };
+                assertions = [
+                  {
+                    value = true;
+                    message = "unreachable";
+                  }
+                ];
               })
             ];
       in
@@ -484,11 +525,25 @@ in
             value = 2;
           }
         ];
+        assertions = [
+          {
+            value = true;
+            message = "unreachable";
+            file = "/aux/example1.nix";
+            key = "example1";
+          }
+          {
+            value = true;
+            message = "unreachable";
+            file = "/aux/example2.nix";
+            key = "example2";
+          }
+        ];
         actual =
           lib.modules.combine
             [ ]
             [
-              (lib.modules.normalize "/aux/example1.nix" "example2" {
+              (lib.modules.normalize "/aux/example1.nix" "example1" {
                 options = {
                   x = lib.options.create { };
                 };
@@ -496,15 +551,29 @@ in
                 config = {
                   x = 1;
                 };
+
+                assertions = [
+                  {
+                    value = true;
+                    message = "unreachable";
+                  }
+                ];
               })
               (lib.modules.normalize "/aux/example2.nix" "example2" {
                 config = {
                   y = 2;
                 };
+
+                assertions = [
+                  {
+                    value = true;
+                    message = "unreachable";
+                  }
+                ];
               })
             ];
       in
-      (actual.unmatched == unmatched) && actual.matched ? x;
+      (actual.unmatched == unmatched) && actual.matched ? x && (actual.assertions == assertions);
   };
 
   "run" = {
@@ -868,5 +937,23 @@ in
         };
       in
       (evaluated.config.aux.message == evaluated.config.aux.message2) && evaluated.config.aux.exists;
+
+    "check assertions" =
+      let
+        evaluated = lib.modules.run {
+          modules = [
+            {
+              assertions = [
+                {
+                  value = false;
+                  message = "spooky";
+                }
+              ];
+            }
+          ];
+        };
+      in
+      (builtins.tryEval evaluated).success == true
+      && (builtins.tryEval evaluated.config).success == false;
   };
 }
