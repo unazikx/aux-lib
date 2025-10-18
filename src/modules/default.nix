@@ -219,6 +219,7 @@ lib: {
     "__key__"
     "includes"
     "excludes"
+    "assertions"
     "options"
     "config"
     "freeform"
@@ -240,11 +241,12 @@ lib: {
     let
       invalid = builtins.removeAttrs module lib.modules.VALID_KEYS;
       invalidKeys = builtins.concatStringsSep ", " (builtins.attrNames invalid);
+      __file__ = builtins.toString module.__file__ or file;
+      __key__ = builtins.toString module.__key__ or key;
     in
     if lib.modules.validate.keys module then
       {
-        __file__ = builtins.toString module.__file__ or file;
-        __key__ = builtins.toString module.__key__ or key;
+        inherit __file__ __key__;
         includes = module.includes or [ ];
         excludes = module.excludes or [ ];
         options = module.options or { };
@@ -271,9 +273,44 @@ lib: {
                 config;
           in
           withFreeform (withMeta base);
+        assertions =
+          let
+            type = builtins.typeOf module.assertions;
+            validateAssert =
+              assertion:
+              (builtins.isAttrs assertion)
+              && (
+                builtins.removeAttrs assertion [
+                  "value"
+                  "message"
+                ] == { }
+              )
+              && (assertion ? value)
+              && (assertion ? message);
+            normalizeAssert =
+              assertion:
+              assertion
+              // {
+                file = __file__;
+                key = __key__;
+              };
+          in
+          if !module ? assertions then
+            [ ]
+          else if type != "list" then
+            builtins.throw "Module `${__key__}` (${__file__}) has an 'assertions' attribute that is not a list but a ${type}"
+          else if !builtins.all (validateAssert) module.assertions then
+            builtins.throw ''
+              Module `${__key__}` (${__file__}) has invalid assertion(s)
+              Each assertion should be a set with:
+              - a 'value' attribute, which indicates the assertion fails if and only if it is not `true`.
+              - a 'message' attribute containing the message to throw if the assertion fails.
+              No other attribute is permitted''
+          else
+            builtins.map normalizeAssert module.assertions;
       }
     else
-      builtins.throw "Module `${key}` (${file}) has unsupported attribute(s): ${invalidKeys}";
+      builtins.throw "Module `${__key__}` (${__file__}) has unsupported attribute(s): ${invalidKeys}";
 
   /**
     Convert a module that is either a function or an attribute set into
@@ -520,6 +557,8 @@ lib: {
 
       configs = builtins.concatMap getConfig modules;
 
+      assertions = builtins.concatMap (module: module.assertions) modules;
+
       process =
         prefix: options: configs:
         let
@@ -630,7 +669,7 @@ lib: {
               );
         };
     in
-    process prefix modules configs;
+    process prefix modules configs // { inherit assertions; };
 
   /**
     Run a set of modules. Custom arguments can also be supplied which will
@@ -856,6 +895,22 @@ lib: {
               ''
           else
             builtins.throw message
+        else if config.__module__.check && merged.assertions != [ ] then
+          builtins.trace "[WARN]: module assertions are experimental" builtins.foldl' (
+            _:
+            {
+              value,
+              message,
+              file,
+              key,
+            }:
+            if (builtins.tryEval value).value == true then
+              null
+            else
+              builtins.throw ''
+                Assertion failed in module `${key}` (${file}):
+                ${builtins.toString message}''
+          ) null merged.assertions
         else
           null;
 
