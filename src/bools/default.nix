@@ -44,7 +44,7 @@ lib: {
   /**
     Perform a logical OR operation on two values.
   */
-  or = a: b: a || b;
+  "or" = a: b: a || b;
 
   /**
     Perform a logical OR operation on two functions being applied to a value.

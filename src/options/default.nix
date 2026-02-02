@@ -17,7 +17,7 @@ lib: {
         mergedFunctions = x: lib.options.mergeDefault location (builtins.map (f: f x) values);
         mergedLists = builtins.concatLists values;
         mergedAttrs = builtins.foldl' lib.attrs.merge { } values;
-        mergedBools = builtins.any lib.bools.or false values;
+        mergedBools = builtins.any lib.bools."or" false values;
         mergedStrings = lib.strings.concat values;
       in
       if builtins.length values == 1 then

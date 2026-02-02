@@ -117,25 +117,25 @@ in
     "returns true when both are true" =
       let
         expected = true;
-        actual = lib.bools.or true true;
+        actual = lib.bools."or" true true;
       in
       actual == expected;
     "returns true when first is true" =
       let
         expected = true;
-        actual = lib.bools.or true false;
+        actual = lib.bools."or" true false;
       in
       actual == expected;
     "returns true when second is true" =
       let
         expected = true;
-        actual = lib.bools.or false true;
+        actual = lib.bools."or" false true;
       in
       actual == expected;
     "returns false when both are false" =
       let
         expected = false;
-        actual = lib.bools.or false false;
+        actual = lib.bools."or" false false;
       in
       actual == expected;
   };
