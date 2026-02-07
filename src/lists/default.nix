@@ -360,4 +360,15 @@ lib: {
   */
   flatten =
     value: if builtins.isList value then builtins.concatMap lib.lists.flatten value else [ value ];
+
+  /**
+    Creates a list of length `count` where every item is set to `item`.
+
+    # Type
+
+    ```
+    repeat :: Int -> Any -> [Any]
+    ```
+  */
+  repeat = count: item: builtins.genList (i: item) count;
 }

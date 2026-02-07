@@ -11,6 +11,7 @@ let
     "lists"
     "math"
     "modules"
+    "nixpkgs"
     "numbers"
     "options"
     "packages"
